@@ -704,4 +704,3 @@ class _NavigateScreenState extends State<NavigateScreen> {
   }
 }
 
-//
