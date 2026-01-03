@@ -1,0 +1,12 @@
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/icon/app_icon.png"
+  # If you have separate foreground/background for adaptive icon
+  # adaptive_icon_background: "#6B46C1"  # Deep purple from your logo
+  # adaptive_icon_foreground: "assets/icon/app_icon_foreground.png"
+  
+  # Remove the old icon before generating new one
+  remove_alpha_ios: true
+  remove_alpha_android: true
+

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "959667247262",
+    "project_id": "getmycar-85be4",
+    "storage_bucket": "getmycar-85be4.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:959667247262:android:ca5d95393ec6a300dd038f",
+        "android_client_info": {
+          "package_name": "com.lagrange.getmycar"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBKqXtXhUXKc3k5Wf_D-uIq_2MAmYoin5E"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
