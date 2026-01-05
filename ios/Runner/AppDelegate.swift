@@ -4,6 +4,7 @@ import GoogleMaps
 import UserNotifications
 import FirebaseCore
 import FirebaseMessaging
+import AVFoundation
 
 @main
 @objc class AppDelegate: FlutterAppDelegate, MessagingDelegate {
@@ -63,6 +64,10 @@ import FirebaseMessaging
         result(FlutterMethodNotImplemented)
       }
     }
+    
+    // Register Car Bluetooth handler before GeneratedPluginRegistrant
+    // Note: Uncomment after adding CarBluetoothHandler.swift to Xcode project
+    // CarBluetoothHandler.register(with: registrar(forPlugin: "CarBluetoothHandler"))
     
     GeneratedPluginRegistrant.register(with: self)
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)

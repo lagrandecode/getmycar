@@ -10,7 +10,8 @@ import 'services/parking_service.dart';
 import 'services/ai_service.dart';
 import 'services/notification_service.dart';
 import 'services/fcm_service.dart';
-import 'services/bluetooth_service.dart';
+import 'services/car_bluetooth_service.dart';
+import 'services/car_location_capture.dart';
 import 'screens/home_screen.dart';
 import 'screens/login_screen.dart';
 import 'screens/save_parking_screen.dart';
@@ -19,6 +20,8 @@ import 'screens/history_screen.dart';
 import 'screens/faq_screen.dart';
 import 'screens/main_navigation.dart';
 import 'screens/settings_screen.dart';
+import 'screens/car_bluetooth_settings_screen.dart';
+import 'screens/onboarding_paywall_screen.dart';
 import 'providers/theme_provider.dart';
 
 void main() async {
@@ -93,22 +96,53 @@ void main() async {
     print('⚠️  Push notifications may not work');
   }
   
-  // Initialize Bluetooth service for car connection detection
+  // Initialize Car Bluetooth service for car connection detection
+  // Note: This may fail gracefully if platform implementation is not available
   try {
-    await BluetoothService.instance.initialize();
-    await BluetoothService.instance.startMonitoring();
-    print('✅ Bluetooth service initialized and monitoring started');
+    await CarBluetoothService.instance.initialize();
+    await _setupCarBluetoothListener();
+    await CarBluetoothService.instance.startMonitoring();
+    print('✅ Car Bluetooth service initialized and monitoring started');
   } catch (e) {
-    print('❌ Bluetooth service initialization failed: $e');
-    print('⚠️  Car Bluetooth connection detection may not work');
+    print('⚠️ Car Bluetooth service initialization failed (this is OK if platform implementation is disabled): $e');
+    print('⚠️  Car Bluetooth connection detection will not work');
   }
   
   runApp(const MyApp());
 }
 
+/// Setup listener for car Bluetooth connection changes
+Future<void> _setupCarBluetoothListener() async {
+  final carBluetoothService = CarBluetoothService.instance;
+  final carLocationCapture = CarLocationCapture();
+  
+  carBluetoothService.connectionStream.listen((isConnected) async {
+    try {
+      if (isConnected) {
+        // Car connected - show notification
+        print('🚗 Car Bluetooth connected - showing notification');
+        await NotificationService.showCarConnectedNotificationSimple();
+      } else {
+        // Car disconnected - capture location and save
+        print('🚗 Car Bluetooth disconnected - capturing location...');
+        await carLocationCapture.captureAndSaveLocation();
+        print('✅ Location captured and saved after car disconnect');
+      }
+    } catch (e) {
+      print('❌ Error handling car Bluetooth connection change: $e');
+    }
+  });
+  
+  print('✅ Car Bluetooth listener set up');
+}
+
 final _router = GoRouter(
-  initialLocation: '/login',
+  initialLocation: '/onboarding-paywall',
   routes: [
+    GoRoute(
+      path: '/onboarding-paywall',
+      builder: (context, state) => const OnboardingPaywallScreen(),
+    ),
     GoRoute(
       path: '/login',
       builder: (context, state) => const LoginScreen(),
@@ -127,6 +161,10 @@ final _router = GoRouter(
         final sessionId = state.pathParameters['sessionId']!;
         return NavigateScreen(sessionId: sessionId);
       },
+    ),
+    GoRoute(
+      path: '/car-bluetooth-settings',
+      builder: (context, state) => const CarBluetoothSettingsScreen(),
     ),
   ],
 );

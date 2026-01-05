@@ -5,6 +5,7 @@ import '../services/auth_service.dart';
 import '../providers/theme_provider.dart';
 import '../widgets/map_background.dart';
 import 'faq_screen.dart';
+import 'car_bluetooth_settings_screen.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -141,6 +142,20 @@ class SettingsScreen extends StatelessWidget {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text('Map style settings coming soon')),
                 );
+              },
+            ),
+          ),
+
+          // Car Bluetooth Settings
+          Card(
+            margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
+            child: ListTile(
+              leading: const Icon(Icons.bluetooth),
+              title: const Text('Select My Car Bluetooth'),
+              subtitle: const Text('Choose your car Bluetooth device'),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () {
+                context.go('/car-bluetooth-settings');
               },
             ),
           ),
