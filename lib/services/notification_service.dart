@@ -188,37 +188,5 @@ class NotificationService {
       details,
     );
   }
-
-  /// Show notification when car Bluetooth connects (Audiomack-style)
-  static Future<void> showCarConnectedNotificationSimple() async {
-    await initialize();
-
-    const androidDetails = AndroidNotificationDetails(
-      'parking_channel',
-      'Parking Notifications',
-      channelDescription: 'Notifications for parking location updates',
-      importance: Importance.high,
-      priority: Priority.high,
-      showWhen: false,
-    );
-
-    const iosDetails = DarwinNotificationDetails(
-      presentAlert: true,
-      presentBadge: true,
-      presentSound: false, // Silent for connection
-    );
-
-    const details = NotificationDetails(
-      android: androidDetails,
-      iOS: iosDetails,
-    );
-
-    await _notifications.show(
-      DateTime.now().millisecondsSinceEpoch % 100000 + 2,
-      'Connected',
-      'Your phone is now connected to your car.',
-      details,
-    );
-  }
 }
 

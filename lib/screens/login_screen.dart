@@ -3,6 +3,7 @@ import 'package:flutter/scheduler.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:video_player/video_player.dart';
 import '../services/auth_service.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -18,11 +19,91 @@ class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   bool _isLoading = false;
   bool _isSignUp = false;
+  VideoPlayerController? _videoController;
+  int _currentVideoIndex = 0;
+  bool _isSwitchingVideo = false;
+  final List<String> _videoPaths = [
+    'assets/images/intro1.mp4',
+    'assets/images/intro2.mp4',
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    _initializeVideo();
+  }
+
+  Future<void> _initializeVideo() async {
+    _videoController = VideoPlayerController.asset(_videoPaths[_currentVideoIndex]);
+    await _videoController!.initialize();
+    _videoController!.setVolume(0); // Mute the video
+    _videoController!.play();
+    
+    // Listen for video completion and switch to next video
+    _videoController!.addListener(_onVideoStatusChanged);
+    
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
+  void _onVideoStatusChanged() {
+    if (_isSwitchingVideo || 
+        _videoController == null || 
+        !_videoController!.value.isInitialized ||
+        _videoController!.value.duration == Duration.zero) {
+      return;
+    }
+    
+    final position = _videoController!.value.position;
+    final duration = _videoController!.value.duration;
+    
+    // Check if video has reached the end (within 200ms threshold)
+    if (position + const Duration(milliseconds: 200) >= duration) {
+      // Current video finished, switch to next
+      _switchToNextVideo();
+    }
+  }
+
+  Future<void> _switchToNextVideo() async {
+    if (!mounted || _isSwitchingVideo) return;
+    
+    _isSwitchingVideo = true;
+    
+    try {
+      // Remove listener before disposing
+      _videoController?.removeListener(_onVideoStatusChanged);
+      
+      // Dispose current controller
+      await _videoController?.dispose();
+      
+      // Move to next video (loop back to first after last)
+      _currentVideoIndex = (_currentVideoIndex + 1) % _videoPaths.length;
+      
+      // Initialize next video
+      _videoController = VideoPlayerController.asset(_videoPaths[_currentVideoIndex]);
+      await _videoController!.initialize();
+      _videoController!.setVolume(0); // Mute the video
+      
+      // Listen for completion again before playing
+      _videoController!.addListener(_onVideoStatusChanged);
+      
+      _videoController!.play();
+      
+      if (mounted) {
+        setState(() {});
+      }
+    } finally {
+      _isSwitchingVideo = false;
+    }
+  }
 
   @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
+    _videoController?.removeListener(_onVideoStatusChanged);
+    _videoController?.dispose();
     super.dispose();
   }
 
@@ -212,22 +293,28 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final brightness = Theme.of(context).brightness;
-    final isDark = brightness == Brightness.dark;
-    final backgroundImage = isDark 
-        ? 'assets/icon/dark.jpg'
-        : 'assets/icon/light.jpg';
-    
     return Scaffold(
       body: Stack(
         children: [
-          // Full screen background image
-          Positioned.fill(
-            child: Image.asset(
-              backgroundImage,
-              fit: BoxFit.cover,
+          // Full screen video background
+          if (_videoController != null && _videoController!.value.isInitialized)
+            Positioned.fill(
+              child: FittedBox(
+                fit: BoxFit.cover,
+                child: SizedBox(
+                  width: _videoController!.value.size.width,
+                  height: _videoController!.value.size.height,
+                  child: VideoPlayer(_videoController!),
+                ),
+              ),
+            )
+          else
+            Container(
+              color: Colors.black,
+              child: const Center(
+                child: CircularProgressIndicator(color: Colors.white),
+              ),
             ),
-          ),
           // Dark overlay for better text readability
           Container(
             color: Colors.black.withValues(alpha: 0.5),
