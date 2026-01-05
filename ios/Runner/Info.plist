@@ -47,6 +47,10 @@
 	<string>We need your location to alert you when you're near your parked car.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>We need your location to save and find your parking spot.</string>
+	<key>NSBluetoothAlwaysUsageDescription</key>
+	<string>We need Bluetooth access to detect when you connect to your car and automatically save parking locations.</string>
+	<key>NSBluetoothPeripheralUsageDescription</key>
+	<string>We need Bluetooth access to detect when you connect to your car and automatically save parking locations.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>We need photo library access to save parking spot photos.</string>
 	<key>UIApplicationSupportsIndirectInputEvents</key>

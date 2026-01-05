@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../services/ai_service.dart';
+import '../widgets/map_background.dart';
 
 class FAQScreen extends StatefulWidget {
   const FAQScreen({super.key});
@@ -55,7 +56,8 @@ class _FAQScreenState extends State<FAQScreen> {
       appBar: AppBar(
         title: const Text('Help & FAQ'),
       ),
-      body: GestureDetector(
+      body: MapBackground(
+        child: GestureDetector(
         onTap: () {
           FocusScope.of(context).unfocus();
         },
@@ -156,6 +158,7 @@ class _FAQScreenState extends State<FAQScreen> {
                   ),
           ),
         ],
+        ),
         ),
       ),
     );

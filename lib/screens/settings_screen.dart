@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import '../services/auth_service.dart';
 import '../providers/theme_provider.dart';
+import '../widgets/map_background.dart';
 import 'faq_screen.dart';
 
 class SettingsScreen extends StatelessWidget {
@@ -18,7 +19,8 @@ class SettingsScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text('Settings'),
       ),
-      body: ListView(
+      body: MapBackground(
+        child: ListView(
         children: [
           // User Profile Section
           if (user != null) ...[
@@ -338,6 +340,7 @@ class SettingsScreen extends StatelessWidget {
           const SizedBox(height: 32),
         ],
       ),
+        ),
     );
   }
 }

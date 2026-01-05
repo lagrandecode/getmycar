@@ -20,6 +20,12 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _isLoading = false;
   bool _isSignUp = false;
   VideoPlayerController? _videoController;
+  int _currentVideoIndex = 0;
+  bool _isSwitchingVideo = false;
+  final List<String> _videoPaths = [
+    'assets/images/intro1.mp4',
+    'assets/images/intro2.mp4',
+  ];
 
   @override
   void initState() {
@@ -28,13 +34,67 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _initializeVideo() async {
-    _videoController = VideoPlayerController.asset('assets/images/intro.mp4');
+    _videoController = VideoPlayerController.asset(_videoPaths[_currentVideoIndex]);
     await _videoController!.initialize();
-    _videoController!.setLooping(true);
     _videoController!.setVolume(0); // Mute the video
     _videoController!.play();
+    
+    // Listen for video completion and switch to next video
+    _videoController!.addListener(_onVideoStatusChanged);
+    
     if (mounted) {
       setState(() {});
+    }
+  }
+
+  void _onVideoStatusChanged() {
+    if (_isSwitchingVideo || 
+        _videoController == null || 
+        !_videoController!.value.isInitialized ||
+        _videoController!.value.duration == Duration.zero) {
+      return;
+    }
+    
+    final position = _videoController!.value.position;
+    final duration = _videoController!.value.duration;
+    
+    // Check if video has reached the end (within 200ms threshold)
+    if (position + const Duration(milliseconds: 200) >= duration) {
+      // Current video finished, switch to next
+      _switchToNextVideo();
+    }
+  }
+
+  Future<void> _switchToNextVideo() async {
+    if (!mounted || _isSwitchingVideo) return;
+    
+    _isSwitchingVideo = true;
+    
+    try {
+      // Remove listener before disposing
+      _videoController?.removeListener(_onVideoStatusChanged);
+      
+      // Dispose current controller
+      await _videoController?.dispose();
+      
+      // Move to next video (loop back to first after last)
+      _currentVideoIndex = (_currentVideoIndex + 1) % _videoPaths.length;
+      
+      // Initialize next video
+      _videoController = VideoPlayerController.asset(_videoPaths[_currentVideoIndex]);
+      await _videoController!.initialize();
+      _videoController!.setVolume(0); // Mute the video
+      
+      // Listen for completion again before playing
+      _videoController!.addListener(_onVideoStatusChanged);
+      
+      _videoController!.play();
+      
+      if (mounted) {
+        setState(() {});
+      }
+    } finally {
+      _isSwitchingVideo = false;
     }
   }
 
@@ -42,6 +102,7 @@ class _LoginScreenState extends State<LoginScreen> {
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
+    _videoController?.removeListener(_onVideoStatusChanged);
     _videoController?.dispose();
     super.dispose();
   }

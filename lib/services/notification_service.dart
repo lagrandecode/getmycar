@@ -156,5 +156,37 @@ class NotificationService {
       payload: payload,
     );
   }
+
+  /// Show notification when car Bluetooth is connected
+  static Future<void> showCarConnectedNotification() async {
+    await initialize();
+
+    const androidDetails = AndroidNotificationDetails(
+      'parking_channel',
+      'Parking Notifications',
+      channelDescription: 'Notifications for parking location updates',
+      importance: Importance.high,
+      priority: Priority.high,
+      showWhen: true,
+    );
+
+    const iosDetails = DarwinNotificationDetails(
+      presentAlert: true,
+      presentBadge: true,
+      presentSound: true,
+    );
+
+    const details = NotificationDetails(
+      android: androidDetails,
+      iOS: iosDetails,
+    );
+
+    await _notifications.show(
+      DateTime.now().millisecondsSinceEpoch % 100000 + 1,
+      '🚗 Car Connected',
+      'Your phone is now connected to your car.',
+      details,
+    );
+  }
 }
 

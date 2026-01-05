@@ -8,6 +8,7 @@ import '../services/location_service.dart';
 import '../services/parking_service.dart';
 import '../services/ai_service.dart';
 import '../models/parking_session_model.dart';
+import '../widgets/map_background.dart';
 
 class SaveParkingScreen extends StatefulWidget {
   const SaveParkingScreen({super.key});
@@ -244,7 +245,8 @@ class _SaveParkingScreenState extends State<SaveParkingScreen> {
         actions: [IconButton(onPressed: ()=>context.go('/home'), icon: Icon(Icons.arrow_back))],
         title: const Text('Save Parking Spot'),
       ),
-      body: GestureDetector(
+      body: MapBackground(
+        child: GestureDetector(
         onTap: () {
           FocusScope.of(context).unfocus();
         },
@@ -392,6 +394,7 @@ class _SaveParkingScreenState extends State<SaveParkingScreen> {
             ),
           ],
           ),
+        ),
         ),
       ),
     );

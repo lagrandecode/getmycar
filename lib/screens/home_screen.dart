@@ -11,6 +11,7 @@ import '../services/location_service.dart';
 import '../services/ai_service.dart';
 import '../services/notification_service.dart';
 import '../models/parking_session_model.dart';
+import '../widgets/map_background.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -190,8 +191,11 @@ class _HomeScreenState extends State<HomeScreen> {
     final parkingService = context.watch<ParkingService>();
 
     return Scaffold(
-      body: Stack(
-        children: [
+      body: MapBackground(
+        backgroundOpacity: 0.85,
+        overlayOpacity: 0.25,
+        child: Stack(
+          children: [
           // Confetti animation overlay (top center to bottom)
           if (_showConfetti)
             Positioned(
@@ -390,7 +394,7 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
         ],
       ),
-    );
+    ));
   }
 
   String _formatDate(DateTime date) {

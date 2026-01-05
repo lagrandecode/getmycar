@@ -5,7 +5,6 @@ import 'package:go_router/go_router.dart';
 import 'home_screen.dart';
 import 'history_screen.dart';
 import 'settings_screen.dart';
-import 'navigate_screen.dart';
 import '../services/parking_service.dart';
 import '../models/parking_session_model.dart';
 
@@ -49,42 +48,6 @@ class _MainNavigationState extends State<MainNavigation> {
     _loadActiveSession();
   }
 
-  Widget _buildMapTab() {
-    // Reload active session when map tab is shown
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _loadActiveSession();
-    });
-
-    if (_activeSession == null || _activeSession!.id == null) {
-      return Scaffold(
-        body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.directions_car_outlined, size: 64, color: Colors.grey),
-              const SizedBox(height: 16),
-              Text(
-                'No Active Parking',
-                style: Theme.of(context).textTheme.titleLarge,
-              ),
-              const SizedBox(height: 8),
-              const Text('Save a parking spot to see it on the map'),
-              const SizedBox(height: 24),
-              ElevatedButton.icon(
-                onPressed: () => context.go('/save-parking'),
-                icon: const Icon(Icons.directions_car),
-                label: const Text('Save Parking Spot'),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
-
-    // Always show NavigateScreen when there's an active session
-    return NavigateScreen(sessionId: _activeSession!.id!);
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -92,7 +55,6 @@ class _MainNavigationState extends State<MainNavigation> {
         index: _currentIndex,
         children: [
           const HomeScreen(),
-          _buildMapTab(),
           const HistoryScreen(),
           const SettingsScreen(),
         ],
@@ -150,21 +112,8 @@ class _MainNavigationState extends State<MainNavigation> {
                 ),
                 NavigationDestination(
                   icon: Icon(
-                    Icons.map_outlined,
-                    color: _currentIndex == 1
-                        ? Theme.of(context).colorScheme.primary
-                        : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
-                  ),
-                  selectedIcon: Icon(
-                    Icons.map,
-                    color: Theme.of(context).colorScheme.primary,
-                  ),
-                  label: 'Map',
-                ),
-                NavigationDestination(
-                  icon: Icon(
                     Icons.history_outlined,
-                    color: _currentIndex == 2
+                    color: _currentIndex == 1
                         ? Theme.of(context).colorScheme.primary
                         : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
                   ),
@@ -177,7 +126,7 @@ class _MainNavigationState extends State<MainNavigation> {
                 NavigationDestination(
                   icon: Icon(
                     Icons.settings_outlined,
-                    color: _currentIndex == 3
+                    color: _currentIndex == 2
                         ? Theme.of(context).colorScheme.primary
                         : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
                   ),

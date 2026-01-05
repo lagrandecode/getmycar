@@ -10,6 +10,7 @@ import 'services/parking_service.dart';
 import 'services/ai_service.dart';
 import 'services/notification_service.dart';
 import 'services/fcm_service.dart';
+import 'services/bluetooth_service.dart';
 import 'screens/home_screen.dart';
 import 'screens/login_screen.dart';
 import 'screens/save_parking_screen.dart';
@@ -90,6 +91,16 @@ void main() async {
   } catch (e) {
     print('❌ FCM initialization failed: $e');
     print('⚠️  Push notifications may not work');
+  }
+  
+  // Initialize Bluetooth service for car connection detection
+  try {
+    await BluetoothService.instance.initialize();
+    await BluetoothService.instance.startMonitoring();
+    print('✅ Bluetooth service initialized and monitoring started');
+  } catch (e) {
+    print('❌ Bluetooth service initialization failed: $e');
+    print('⚠️  Car Bluetooth connection detection may not work');
   }
   
   runApp(const MyApp());

@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../services/parking_service.dart';
 import '../services/ai_service.dart';
 import '../models/parking_session_model.dart';
+import '../widgets/map_background.dart';
 import 'package:intl/intl.dart';
 
 class HistoryScreen extends StatefulWidget {
@@ -79,7 +80,8 @@ class _HistoryScreenState extends State<HistoryScreen> {
       appBar: AppBar(
         title: const Text('Parking History'),
       ),
-      body: GestureDetector(
+      body: MapBackground(
+        child: GestureDetector(
         onTap: () {
           FocusScope.of(context).unfocus();
         },
@@ -210,6 +212,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
         ],
         ),
       ),
+        ),
     );
   }
 }
