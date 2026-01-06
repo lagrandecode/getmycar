@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:video_player/video_player.dart';
 
 /// Onboarding/Paywall screen with video slideshow and subscription options
@@ -86,18 +87,14 @@ class _OnboardingPaywallScreenState extends State<OnboardingPaywallScreen> {
       const SnackBar(content: Text('Restore purchases - TODO: Implement')),
     );
   }
+  final String policy = "https://drive.google.com/file/d/1rBy54sZjFmPrHDUoZxh4WOmR6Mu34tpw/view?usp=drive_link";
+  Uri get _url => Uri.parse(policy);
 
-  void _handleTerms() {
+  Future<void> _handleTerms() async {
     // TODO: Navigate to terms screen or open URL
-    // Example:
-    // context.go('/terms');
-    // or
-    // launchUrl(Uri.parse('https://example.com/terms'));
-    
-    print('📄 Terms tapped - TODO: Open terms screen/URL');
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Terms - TODO: Implement')),
-    );
+    if(!await launchUrl(_url,mode: LaunchMode.externalApplication)){
+      throw Exception("Could not Launch $_url");
+    }
   }
 
   @override
@@ -148,7 +145,12 @@ class _OnboardingPaywallScreenState extends State<OnboardingPaywallScreen> {
                         Text(
                           'Save your parking spot and navigate back easily',
                           style: textTheme.bodyLarge?.copyWith(
-                            color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+                            color: theme.brightness == Brightness.light
+                                ? Colors.black
+                                : theme.colorScheme.onSurface.withValues(alpha: 0.7),
+                            fontWeight: theme.brightness == Brightness.light
+                                ? FontWeight.bold
+                                : FontWeight.normal,
                             fontSize: isSmallScreen 
                                 ? textTheme.bodyMedium?.fontSize 
                                 : textTheme.bodyLarge?.fontSize,
@@ -322,8 +324,12 @@ class _OnboardingPaywallScreenState extends State<OnboardingPaywallScreen> {
               child: Text(
                 'No payment due now',
                 style: textTheme.bodyMedium?.copyWith(
-                  color: theme.colorScheme.primary,
-                  fontWeight: FontWeight.w500,
+                  color: theme.brightness == Brightness.light
+                      ? Colors.black
+                      : theme.colorScheme.primary,
+                  fontWeight: theme.brightness == Brightness.light
+                      ? FontWeight.bold
+                      : FontWeight.w500,
                   fontSize: isSmallScreen 
                       ? textTheme.bodySmall?.fontSize 
                       : textTheme.bodyMedium?.fontSize,
@@ -339,8 +345,8 @@ class _OnboardingPaywallScreenState extends State<OnboardingPaywallScreen> {
         ElevatedButton(
           onPressed: _handleTryForFree,
           style: ElevatedButton.styleFrom(
-            backgroundColor: theme.colorScheme.primary,
-            foregroundColor: theme.colorScheme.onPrimary,
+            backgroundColor: const Color(0xFFB62730),
+            foregroundColor: Colors.white,
             padding: EdgeInsets.symmetric(
               vertical: isSmallScreen ? 12 : 16,
             ),
@@ -365,7 +371,12 @@ class _OnboardingPaywallScreenState extends State<OnboardingPaywallScreen> {
         Text(
           '3 days free, then \$9.99/wk',
           style: textTheme.bodySmall?.copyWith(
-            color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+            color: theme.brightness == Brightness.light
+                ? Colors.black
+                : theme.colorScheme.onSurface.withValues(alpha: 0.6),
+            fontWeight: theme.brightness == Brightness.light
+                ? FontWeight.bold
+                : FontWeight.normal,
             fontSize: pricingFontSize,
           ),
           textAlign: TextAlign.center,
@@ -383,7 +394,12 @@ class _OnboardingPaywallScreenState extends State<OnboardingPaywallScreen> {
           child: Text(
             'Restore',
             style: textTheme.bodySmall?.copyWith(
-              color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+              color: theme.brightness == Brightness.light
+                  ? Colors.black
+                  : theme.colorScheme.onSurface.withValues(alpha: 0.6),
+              fontWeight: theme.brightness == Brightness.light
+                  ? FontWeight.bold
+                  : FontWeight.normal,
             ),
           ),
         ),
@@ -392,7 +408,12 @@ class _OnboardingPaywallScreenState extends State<OnboardingPaywallScreen> {
           child: Text(
             'Terms',
             style: textTheme.bodySmall?.copyWith(
-              color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+              color: theme.brightness == Brightness.light
+                  ? Colors.black
+                  : theme.colorScheme.onSurface.withValues(alpha: 0.6),
+              fontWeight: theme.brightness == Brightness.light
+                  ? FontWeight.bold
+                  : FontWeight.normal,
             ),
           ),
         ),

@@ -186,14 +186,17 @@ class MyApp extends StatelessWidget {
           return MaterialApp.router(
             title: 'getmycar',
             theme: ThemeData(
-              colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
+              colorScheme: ColorScheme.fromSeed(
+                seedColor: const Color(0xFF313B4E), // Your logo color
+                brightness: Brightness.light,
+              ),
               useMaterial3: true,
               brightness: Brightness.light,
               textTheme: GoogleFonts.spaceGroteskTextTheme(),
             ),
             darkTheme: ThemeData(
               colorScheme: ColorScheme.fromSeed(
-                seedColor: Colors.blue,
+                seedColor: const Color(0xFF4A5A6E), // Lighter variant for dark theme
                 brightness: Brightness.dark,
               ),
               useMaterial3: true,

@@ -24,7 +24,7 @@ class _NavigateScreenState extends State<NavigateScreen> {
   double? _distance;
   bool _isLoading = true;
   String? _mapError;
-  MapType _selectedMapType = MapType.normal;
+  MapType _selectedMapType = MapType.satellite;
   BitmapDescriptor? _carIcon;
   GoogleMapController? _mapController;
   Set<Polyline> _polylines = {};
@@ -440,7 +440,7 @@ class _NavigateScreenState extends State<NavigateScreen> {
               : GoogleMap(
                     initialCameraPosition: CameraPosition(
                       target: LatLng(_session!.lat, _session!.lng),
-                      zoom: 16,
+                      zoom: 18,
                     ),
                     markers: {
                       Marker(
