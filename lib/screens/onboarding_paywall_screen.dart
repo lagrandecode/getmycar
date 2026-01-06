@@ -367,7 +367,7 @@ class _OnboardingPaywallScreenState extends State<OnboardingPaywallScreen> {
         ),
         SizedBox(height: isSmallScreen ? 8 : 12),
         
-        // Pricing text
+        // Pricing
         Text(
           '3 days free, then \$9.99/wk',
           style: textTheme.bodySmall?.copyWith(
