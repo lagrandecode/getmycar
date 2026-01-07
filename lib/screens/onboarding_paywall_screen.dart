@@ -110,17 +110,22 @@ class _OnboardingPaywallScreenState extends State<OnboardingPaywallScreen> {
     final verticalPadding = screenHeight * 0.02; // 2% of screen height
     
     return Scaffold(
-      body: SafeArea(
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final availableHeight = constraints.maxHeight;
-            
-            return Padding(
-              padding: EdgeInsets.symmetric(
-                horizontal: horizontalPadding,
-                vertical: verticalPadding,
-              ),
-              child: Column(
+      body: GestureDetector(
+        onTap: () {
+          FocusScope.of(context).unfocus();
+        },
+        behavior: HitTestBehavior.opaque,
+        child: SafeArea(
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final availableHeight = constraints.maxHeight;
+              
+              return Padding(
+                padding: EdgeInsets.symmetric(
+                  horizontal: horizontalPadding,
+                  vertical: verticalPadding,
+                ),
+                child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   // Top content: Title and Subtitle
@@ -193,7 +198,7 @@ class _OnboardingPaywallScreenState extends State<OnboardingPaywallScreen> {
           },
         ),
       ),
-    );
+    ));
   }
 
   Widget _buildVideoCarousel(ThemeData theme, double availableHeight) {

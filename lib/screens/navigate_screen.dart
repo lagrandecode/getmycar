@@ -387,6 +387,8 @@ class _NavigateScreenState extends State<NavigateScreen> {
     );
   }
 
+  bool _showInfoPanel = false;
+
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
@@ -539,6 +541,22 @@ class _NavigateScreenState extends State<NavigateScreen> {
                   Padding(
                     padding: const EdgeInsets.all(8.0),
                     child: IconButton(
+                      icon: Icon(Icons.info_outline, color:  _showInfoPanel ? Colors.deepOrange : Colors.black),
+                      onPressed: (){
+                        setState(() {
+                          _showInfoPanel = !_showInfoPanel;
+                        });
+                      },
+                      style: IconButton.styleFrom(
+                        backgroundColor: Colors.white.withValues(alpha: 0.9),
+                        padding: const EdgeInsets.all(8),
+                      ),
+                      tooltip: 'Map Type',
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: IconButton(
                       icon: const Icon(Icons.my_location, color: Colors.black),
                       onPressed: _getCurrentLocation,
                       style: IconButton.styleFrom(
@@ -572,7 +590,7 @@ class _NavigateScreenState extends State<NavigateScreen> {
             bottom: 0,
             left: 0,
             right: 0,
-            child: Container(
+            child: _showInfoPanel? Container(
               padding: const EdgeInsets.all(16.0),
               decoration: BoxDecoration(
                 color: Theme.of(context).cardColor,
@@ -697,7 +715,7 @@ class _NavigateScreenState extends State<NavigateScreen> {
                 ],
               ],
             ),
-          ),
+          ) : SizedBox(height: 1,),
           )],
       ),
     );
