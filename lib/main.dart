@@ -22,6 +22,7 @@ import 'screens/main_navigation.dart';
 import 'screens/settings_screen.dart';
 import 'screens/car_bluetooth_settings_screen.dart';
 import 'screens/onboarding_paywall_screen.dart';
+import 'screens/splash_screen.dart';
 import 'providers/theme_provider.dart';
 
 void main() async {
@@ -137,8 +138,12 @@ Future<void> _setupCarBluetoothListener() async {
 }
 
 final _router = GoRouter(
-  initialLocation: '/onboarding-paywall',
+  initialLocation: '/splash',
   routes: [
+    GoRoute(
+      path: '/splash',
+      builder: (context, state) => const SplashScreen(),
+    ),
     GoRoute(
       path: '/onboarding-paywall',
       builder: (context, state) => const OnboardingPaywallScreen(),
@@ -174,6 +179,7 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
@@ -184,6 +190,7 @@ class MyApp extends StatelessWidget {
       child: Consumer<ThemeProvider>(
         builder: (context, themeProvider, _) {
           return MaterialApp.router(
+            debugShowCheckedModeBanner: false,
             title: 'getmycar',
             theme: ThemeData(
               colorScheme: ColorScheme.fromSeed(

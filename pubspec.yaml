@@ -63,6 +63,7 @@ flutter:
     - assets/images/intro1.mp4
     - assets/images/intro2.mp4
     - assets/icon/app_icon.png
+    - assets/icon/app_icon_splash.png
     - assets/icon/carIcon.png
     - assets/icon/carIcon_red.png
     - assets/icon/carIcon_black.png
