@@ -1,15 +1,22 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'dart:io';
 import '../models/user_model.dart';
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  
+  // Platform-aware Google Sign-In configuration
+  // For Android: don't specify clientId - it will auto-detect from google-services.json
+  // For iOS: specify the client ID from GoogleService-Info.plist
   final GoogleSignIn _googleSignIn = GoogleSignIn(
     scopes: ['email', 'profile'],
-    // iOS client ID from GoogleService-Info.plist
-    clientId: '959667247262-622056adms0um9u38b53e26nlahooeal.apps.googleusercontent.com',
+    // Only specify clientId for iOS, Android will auto-detect from google-services.json
+    clientId: Platform.isIOS 
+        ? '959667247262-622056adms0um9u38b53e26nlahooeal.apps.googleusercontent.com'
+        : null,
   );
 
   User? get currentUser => _auth.currentUser;

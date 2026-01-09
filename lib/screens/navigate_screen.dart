@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../services/parking_service.dart';
 import '../services/location_service.dart';
 import '../models/parking_session_model.dart';
@@ -36,6 +37,21 @@ class _NavigateScreenState extends State<NavigateScreen> {
     _loadCarIcon();
     _loadSession();
     _getCurrentLocation();
+    _loadMapStyle();
+  }
+
+  Future<void> _loadMapStyle() async {
+    final prefs = await SharedPreferences.getInstance();
+    final savedStyle = prefs.getString('map_style') ?? 'satellite';
+    setState(() {
+      if (savedStyle == 'hybrid') {
+        _selectedMapType = MapType.hybrid;
+      } else if (savedStyle == 'standard') {
+        _selectedMapType = MapType.normal;
+      } else {
+        _selectedMapType = MapType.satellite; // default
+      }
+    });
   }
 
   Future<void> _loadCarIcon() async {

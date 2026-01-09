@@ -7,20 +7,37 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:959667247262:android:ca5d95393ec6a300dd038f",
+        "mobilesdk_app_id": "1:959667247262:android:01e06abb2aca364cdd038f",
         "android_client_info": {
-          "package_name": "com.lagrange.getmycar"
+          "package_name": "com.lagrangecode.getmycar"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "959667247262-bsemab7o42eqcoocegs0r5u45kju7lg8.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
-          "current_key": "AIzaSyBKqXtXhUXKc3k5Wf_D-uIq_2MAmYoin5E"
+          "current_key": "AIzaSyBF_2909Uo8prOKpB2qmd9lwy6b8a2-9OM"
         }
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "959667247262-bsemab7o42eqcoocegs0r5u45kju7lg8.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "959667247262-622056adms0um9u38b53e26nlahooeal.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.lagrangecode.getmycar"
+              }
+            }
+          ]
         }
       }
     }

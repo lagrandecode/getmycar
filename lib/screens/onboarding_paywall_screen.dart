@@ -369,7 +369,7 @@ class _OnboardingPaywallScreenState extends State<OnboardingPaywallScreen> {
         
         // Pricing
         Text(
-          '3 days free, then \$9.99/wk',
+          '3 days free, then \$9.99/mo',
           style: textTheme.bodySmall?.copyWith(
             color: theme.brightness == Brightness.light
                 ? Colors.black

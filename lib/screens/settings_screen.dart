@@ -1,14 +1,80 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:package_info_plus/package_info_plus.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:io';
 import '../services/auth_service.dart';
 import '../providers/theme_provider.dart';
 import '../widgets/map_background.dart';
-import 'faq_screen.dart';
-import 'car_bluetooth_settings_screen.dart';
+import '../widgets/in_app_review_dialog.dart';
+// import 'car_bluetooth_settings_screen.dart';
 
-class SettingsScreen extends StatelessWidget {
+class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
+
+  @override
+  State<SettingsScreen> createState() => _SettingsScreenState();
+}
+
+class _SettingsScreenState extends State<SettingsScreen> {
+  bool _notificationsEnabled = true;
+  String _appVersion = '1.0.0';
+  String _selectedMapStyle = 'satellite'; // 'standard', 'hybrid', or 'satellite'
+
+  @override
+  void initState() {
+    super.initState();
+    _loadAppVersion();
+    _loadMapStyle();
+    _showReviewDialog();
+  }
+
+  Future<void> _showReviewDialog() async {
+    // Check if user has already rated
+    final prefs = await SharedPreferences.getInstance();
+    final hasRated = prefs.getBool('has_rated_app') ?? false;
+    
+    if (hasRated) {
+      return; // Don't show dialog if user has already rated
+    }
+    
+    // Show review dialog after a short delay to allow screen to build
+    Future.delayed(const Duration(milliseconds: 500), () {
+      if (mounted) {
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (context) => const InAppReviewDialog(),
+        );
+      }
+    });
+  }
+
+  Future<void> _loadMapStyle() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _selectedMapStyle = prefs.getString('map_style') ?? 'satellite';
+    });
+  }
+
+  Future<void> _saveMapStyle(String style) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('map_style', style);
+    setState(() {
+      _selectedMapStyle = style;
+    });
+  }
+
+  Future<void> _loadAppVersion() async {
+    final packageInfo = await PackageInfo.fromPlatform();
+    if (mounted) {
+      setState(() {
+        _appVersion = packageInfo.version;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -132,33 +198,62 @@ class SettingsScreen extends StatelessWidget {
           // Map Style
           Card(
             margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
-            child: ListTile(
+            child: ExpansionTile(
               leading: const Icon(Icons.map),
               title: const Text('Map Style'),
-              subtitle: const Text('Default map style'),
-              trailing: const Icon(Icons.chevron_right),
-              onTap: () {
-                // Future: Map style settings
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Map style settings coming soon')),
-                );
-              },
+              subtitle: Text(_selectedMapStyle == 'standard' 
+                  ? 'Standard' 
+                  : _selectedMapStyle == 'hybrid' 
+                      ? 'Hybrid' 
+                      : 'Satellite'),
+              children: [
+                RadioListTile<String>(
+                  title: const Text('Standard'),
+                  value: 'standard',
+                  groupValue: _selectedMapStyle,
+                  onChanged: (value) {
+                    if (value != null) {
+                      _saveMapStyle(value);
+                    }
+                  },
+                ),
+                RadioListTile<String>(
+                  title: const Text('Hybrid'),
+                  value: 'hybrid',
+                  groupValue: _selectedMapStyle,
+                  onChanged: (value) {
+                    if (value != null) {
+                      _saveMapStyle(value);
+                    }
+                  },
+                ),
+                RadioListTile<String>(
+                  title: const Text('Satellite'),
+                  value: 'satellite',
+                  groupValue: _selectedMapStyle,
+                  onChanged: (value) {
+                    if (value != null) {
+                      _saveMapStyle(value);
+                    }
+                  },
+                ),
+              ],
             ),
           ),
 
           // Car Bluetooth Settings
-          Card(
-            margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
-            child: ListTile(
-              leading: const Icon(Icons.bluetooth),
-              title: const Text('Select My Car Bluetooth'),
-              subtitle: const Text('Choose your car Bluetooth device'),
-              trailing: const Icon(Icons.chevron_right),
-              onTap: () {
-                context.go('/car-bluetooth-settings');
-              },
-            ),
-          ),
+          // Card(
+          //   margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
+          //   child: ListTile(
+          //     leading: const Icon(Icons.bluetooth),
+          //     title: const Text('Select My Car Bluetooth'),
+          //     subtitle: const Text('Choose your car Bluetooth device'),
+          //     trailing: const Icon(Icons.chevron_right),
+          //     onTap: () {
+          //       context.go('/car-bluetooth-settings');
+          //     },
+          //   ),
+          // ),
 
           // Notifications
           Card(
@@ -167,11 +262,11 @@ class SettingsScreen extends StatelessWidget {
               secondary: const Icon(Icons.notifications),
               title: const Text('Notifications'),
               subtitle: const Text('Parking reminders and alerts'),
-              value: true, // TODO: Implement notification preferences
+              value: _notificationsEnabled,
               onChanged: (value) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Notification settings coming soon')),
-                );
+                setState(() {
+                  _notificationsEnabled = value;
+                });
               },
             ),
           ),
@@ -221,19 +316,28 @@ class SettingsScreen extends StatelessWidget {
             ),
           ),
 
-          // FAQ
+          // Contact Us
           Card(
             margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
             child: ListTile(
-              leading: const Icon(Icons.help_outline),
-              title: const Text('FAQ'),
-              subtitle: const Text('Frequently asked questions'),
+              leading: const Icon(Icons.email),
+              title: const Text('Contact Us'),
+              subtitle: const Text('getmycar89@gmail.com'),
               trailing: const Icon(Icons.chevron_right),
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const FAQScreen()),
+              onTap: () async {
+                final emailUri = Uri(
+                  scheme: 'mailto',
+                  path: 'getmycar89@gmail.com',
                 );
+                if (await canLaunchUrl(emailUri)) {
+                  await launchUrl(emailUri);
+                } else {
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Could not open email client')),
+                    );
+                  }
+                }
               },
             ),
           ),
@@ -250,20 +354,20 @@ class SettingsScreen extends StatelessWidget {
           ),
 
           // GPS Accuracy Test
-          Card(
-            margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
-            child: ListTile(
-              leading: const Icon(Icons.gps_fixed),
-              title: const Text('GPS Accuracy Test'),
-              subtitle: const Text('Test your device GPS accuracy'),
-              trailing: const Icon(Icons.chevron_right),
-              onTap: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('GPS test coming soon')),
-                );
-              },
-            ),
-          ),
+          // Card(
+          //   margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
+          //   child: ListTile(
+          //     leading: const Icon(Icons.gps_fixed),
+          //     title: const Text('GPS Accuracy Test'),
+          //     subtitle: const Text('Test your device GPS accuracy'),
+          //     trailing: const Icon(Icons.chevron_right),
+          //     onTap: () {
+          //       ScaffoldMessenger.of(context).showSnackBar(
+          //         const SnackBar(content: Text('GPS test coming soon')),
+          //       );
+          //     },
+          //   ),
+          // ),
 
           // App Version
           Card(
@@ -271,7 +375,7 @@ class SettingsScreen extends StatelessWidget {
             child: ListTile(
               leading: const Icon(Icons.info),
               title: const Text('App Version'),
-              subtitle: const Text('1.0.0'),
+              subtitle: Text(_appVersion),
             ),
           ),
 
