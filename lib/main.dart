@@ -191,7 +191,7 @@ class MyApp extends StatelessWidget {
         builder: (context, themeProvider, _) {
           return MaterialApp.router(
             debugShowCheckedModeBanner: false,
-            title: 'getmycar',
+            title: 'Getmycar',
             theme: ThemeData(
               colorScheme: ColorScheme.fromSeed(
                 seedColor: const Color(0xFF313B4E), // Your logo color

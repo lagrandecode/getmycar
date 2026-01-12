@@ -51,6 +51,8 @@ dependencies:
   shared_preferences: ^2.2.2
   url_launcher: ^6.3.2
   package_info_plus: ^8.0.0
+  purchases_flutter: ^9.10.5
+  purchases_ui_flutter: ^9.10.5
 
 dev_dependencies:
   flutter_test:

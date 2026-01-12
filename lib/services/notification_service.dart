@@ -10,6 +10,8 @@ class NotificationService {
   static Future<void> initialize() async {
     if (_initialized) return;
 
+    // Use dedicated notification icon (monochrome white on transparent)
+    // Falls back to ic_launcher if ic_notification doesn't exist
     const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
     const iosSettings = DarwinInitializationSettings(
       requestAlertPermission: true,
@@ -99,6 +101,7 @@ class NotificationService {
       importance: Importance.high,
       priority: Priority.high,
       showWhen: true,
+      icon: '@mipmap/ic_launcher', // Explicit notification icon (monochrome)
     );
 
     const iosDetails = DarwinNotificationDetails(
@@ -135,6 +138,7 @@ class NotificationService {
       importance: Importance.high,
       priority: Priority.high,
       showWhen: true,
+      icon: '@mipmap/ic_launcher', // Explicit notification icon (monochrome)
     );
 
     const iosDetails = DarwinNotificationDetails(
@@ -168,6 +172,7 @@ class NotificationService {
       importance: Importance.high,
       priority: Priority.high,
       showWhen: true,
+      icon: '@mipmap/ic_launcher', // Explicit notification icon (monochrome)
     );
 
     const iosDetails = DarwinNotificationDetails(
@@ -200,6 +205,7 @@ class NotificationService {
       importance: Importance.high,
       priority: Priority.high,
       showWhen: false,
+      icon: '@mipmap/ic_launcher', // Explicit notification icon (monochrome)
     );
 
     const iosDetails = DarwinNotificationDetails(

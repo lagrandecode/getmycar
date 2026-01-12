@@ -1488,7 +1488,21 @@ PODS:
   - permission_handler_apple (9.3.0):
     - Flutter
   - PromisesObjC (2.4.0)
+  - purchases_flutter (9.10.5):
+    - Flutter
+    - PurchasesHybridCommon (= 17.27.0)
+  - purchases_ui_flutter (9.10.5):
+    - Flutter
+    - PurchasesHybridCommonUI (= 17.27.0)
+  - PurchasesHybridCommon (17.27.0):
+    - RevenueCat (= 5.54.0)
+  - PurchasesHybridCommonUI (17.27.0):
+    - PurchasesHybridCommon (= 17.27.0)
+    - RevenueCatUI (= 5.54.0)
   - RecaptchaInterop (101.0.0)
+  - RevenueCat (5.54.0)
+  - RevenueCatUI (5.54.0):
+    - RevenueCat (= 5.54.0)
   - shared_preferences_foundation (0.0.1):
     - Flutter
     - FlutterMacOS
@@ -1516,6 +1530,8 @@ DEPENDENCIES:
   - package_info_plus (from `.symlinks/plugins/package_info_plus/ios`)
   - path_provider_foundation (from `.symlinks/plugins/path_provider_foundation/darwin`)
   - permission_handler_apple (from `.symlinks/plugins/permission_handler_apple/ios`)
+  - purchases_flutter (from `.symlinks/plugins/purchases_flutter/ios`)
+  - purchases_ui_flutter (from `.symlinks/plugins/purchases_ui_flutter/ios`)
   - shared_preferences_foundation (from `.symlinks/plugins/shared_preferences_foundation/darwin`)
   - url_launcher_ios (from `.symlinks/plugins/url_launcher_ios/ios`)
   - video_player_avfoundation (from `.symlinks/plugins/video_player_avfoundation/darwin`)
@@ -1553,7 +1569,11 @@ SPEC REPOS:
     - leveldb-library
     - nanopb
     - PromisesObjC
+    - PurchasesHybridCommon
+    - PurchasesHybridCommonUI
     - RecaptchaInterop
+    - RevenueCat
+    - RevenueCatUI
 
 EXTERNAL SOURCES:
   cloud_firestore:
@@ -1590,6 +1610,10 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/path_provider_foundation/darwin"
   permission_handler_apple:
     :path: ".symlinks/plugins/permission_handler_apple/ios"
+  purchases_flutter:
+    :path: ".symlinks/plugins/purchases_flutter/ios"
+  purchases_ui_flutter:
+    :path: ".symlinks/plugins/purchases_ui_flutter/ios"
   shared_preferences_foundation:
     :path: ".symlinks/plugins/shared_preferences_foundation/darwin"
   url_launcher_ios:
@@ -1646,7 +1670,13 @@ SPEC CHECKSUMS:
   path_provider_foundation: bb55f6dbba17d0dccd6737fe6f7f34fbd0376880
   permission_handler_apple: 4ed2196e43d0651e8ff7ca3483a069d469701f2d
   PromisesObjC: f5707f49cb48b9636751c5b2e7d227e43fba9f47
+  purchases_flutter: d290b98f9984969e98553411077115de875579f3
+  purchases_ui_flutter: 25291920925fde25198229bfdcab24fe13bfae8c
+  PurchasesHybridCommon: 6969808772a0c2ac7df66abe59e0a88a9e42820b
+  PurchasesHybridCommonUI: 629df05debae47e6adb4f437304ba0d375e3faa9
   RecaptchaInterop: 11e0b637842dfb48308d242afc3f448062325aba
+  RevenueCat: c692534cd6f0d0593f1bbe69b32b09a274422419
+  RevenueCatUI: c497f83d36815f6c394e3aea8aef049789d34d85
   shared_preferences_foundation: 7036424c3d8ec98dfe75ff1667cb0cd531ec82bb
   url_launcher_ios: 7a95fa5b60cc718a708b8f2966718e93db0cef1b
   video_player_avfoundation: dd410b52df6d2466a42d28550e33e4146928280a
