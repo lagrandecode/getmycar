@@ -229,14 +229,8 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
           ),
           // Dark overlay for better text readability
-          GestureDetector(
-            onTap: () {
-              FocusScope.of(context).unfocus();
-            },
-            behavior: HitTestBehavior.opaque,
-            child: Container(
-              color: Colors.black.withValues(alpha: 0.5),
-            ),
+          Container(
+            color: Colors.black.withValues(alpha: 0.5),
           ),
           // Login form content
           SafeArea(

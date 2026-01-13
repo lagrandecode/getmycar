@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:video_player/video_player.dart';
+import '../services/revenuecat_service.dart';
 
 /// Onboarding/Paywall screen with video slideshow and subscription options
 class OnboardingPaywallScreen extends StatefulWidget {
@@ -15,6 +16,8 @@ class _OnboardingPaywallScreenState extends State<OnboardingPaywallScreen> {
   VideoPlayerController? _videoController1;
   VideoPlayerController? _videoController2;
   bool _videosInitialized = false;
+  bool _isPurchasing = false;
+  bool _isRestoring = false;
   static const int videosPerSlide = 4;
 
   @override
@@ -66,26 +69,120 @@ class _OnboardingPaywallScreenState extends State<OnboardingPaywallScreen> {
     return videoIndex == 0 ? _videoController1 : _videoController2;
   }
 
-  void _handleTryForFree() {
-    // TODO: Connect to purchase flow (RevenueCat, in_app_purchase, etc.)
-    // Example:
-    // await PurchaseService.startTrial();
-    // context.go('/login');
+  Future<void> _handleTryForFree() async {
+    if (_isPurchasing || _isRestoring) return;
     
-    print('🚀 Try for free tapped - TODO: Connect purchase flow');
-    // Navigate to login screen
-    context.go('/login');
+    setState(() => _isPurchasing = true);
+    
+    try {
+      // Purchase monthly subscription
+      await RevenueCatService.instance.purchaseMonthlyOrYearly(
+        productId: RevenueCatService.monthlyProductId,
+      );
+      
+      // Check if purchase was successful
+      final isPro = RevenueCatService.instance.isProActive();
+      
+      if (mounted) {
+        if (isPro) {
+          // Show success message
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('✅ Subscription activated! Enjoy your 3-day free trial.'),
+              backgroundColor: Colors.green,
+              duration: Duration(seconds: 3),
+            ),
+          );
+          
+          // Navigate to login screen (replace so user can't go back)
+          if (mounted) {
+            context.go('/login');
+          }
+        } else {
+          // Purchase completed but entitlement not active (shouldn't happen, but handle it)
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Purchase completed. Please wait a moment...'),
+              backgroundColor: Colors.orange,
+            ),
+          );
+          // Still navigate to login
+          if (mounted) {
+            context.go('/login');
+          }
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        final errorMessage = e.toString().contains('cancelled') 
+            ? 'Purchase was cancelled'
+            : 'Purchase failed: ${e.toString().replaceAll('Exception: ', '')}';
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(errorMessage),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 4),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isPurchasing = false);
+      }
+    }
   }
 
-  void _handleRestore() {
-    // TODO: Connect to restore purchases method
-    // Example:
-    // await PurchaseService.restorePurchases();
+  Future<void> _handleRestore() async {
+    if (_isPurchasing || _isRestoring) return;
     
-    print('♻️ Restore tapped - TODO: Connect restore flow');
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Restore purchases - TODO: Implement')),
-    );
+    setState(() => _isRestoring = true);
+    
+    try {
+      await RevenueCatService.instance.restore();
+      
+      // Check if restore was successful
+      final isPro = RevenueCatService.instance.isProActive();
+      
+      if (mounted) {
+        if (isPro) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('✅ Restored successfully'),
+              backgroundColor: Colors.green,
+              duration: Duration(seconds: 2),
+            ),
+          );
+          
+          // Navigate to login screen
+          if (mounted) {
+            context.go('/login');
+          }
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('No active subscription found.'),
+              backgroundColor: Colors.orange,
+              duration: Duration(seconds: 3),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Restore failed: ${e.toString().replaceAll('Exception: ', '')}'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isRestoring = false);
+      }
+    }
   }
   final String policy = "https://drive.google.com/file/d/1rBy54sZjFmPrHDUoZxh4WOmR6Mu34tpw/view?usp=drive_link";
   Uri get _url => Uri.parse(policy);
@@ -343,7 +440,7 @@ class _OnboardingPaywallScreenState extends State<OnboardingPaywallScreen> {
         
         // Primary CTA button
         ElevatedButton(
-          onPressed: _handleTryForFree,
+          onPressed: (_isPurchasing || _isRestoring) ? null : _handleTryForFree,
           style: ElevatedButton.styleFrom(
             backgroundColor: const Color(0xFFB62730),
             foregroundColor: Colors.white,
@@ -355,15 +452,24 @@ class _OnboardingPaywallScreenState extends State<OnboardingPaywallScreen> {
             ),
             elevation: 2,
           ),
-          child: Text(
-            'Try for free 🙌',
-            style: textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.bold,
-              fontSize: isSmallScreen 
-                  ? textTheme.bodyLarge?.fontSize 
-                  : textTheme.titleMedium?.fontSize,
-            ),
-          ),
+          child: _isPurchasing
+              ? SizedBox(
+                  height: 20,
+                  width: 20,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                  ),
+                )
+              : Text(
+                  'Try for free 🙌',
+                  style: textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    fontSize: isSmallScreen 
+                        ? textTheme.bodyLarge?.fontSize 
+                        : textTheme.titleMedium?.fontSize,
+                  ),
+                ),
         ),
         SizedBox(height: isSmallScreen ? 8 : 12),
         
@@ -390,18 +496,31 @@ class _OnboardingPaywallScreenState extends State<OnboardingPaywallScreen> {
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
         TextButton(
-          onPressed: _handleRestore,
-          child: Text(
-            'Restore',
-            style: textTheme.bodySmall?.copyWith(
-              color: theme.brightness == Brightness.light
-                  ? Colors.black
-                  : theme.colorScheme.onSurface.withValues(alpha: 0.6),
-              fontWeight: theme.brightness == Brightness.light
-                  ? FontWeight.bold
-                  : FontWeight.normal,
-            ),
-          ),
+          onPressed: (_isPurchasing || _isRestoring) ? null : _handleRestore,
+          child: _isRestoring
+              ? SizedBox(
+                  height: 16,
+                  width: 16,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    valueColor: AlwaysStoppedAnimation<Color>(
+                      theme.brightness == Brightness.light
+                          ? Colors.black
+                          : theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                    ),
+                  ),
+                )
+              : Text(
+                  'Restore',
+                  style: textTheme.bodySmall?.copyWith(
+                    color: theme.brightness == Brightness.light
+                        ? Colors.black
+                        : theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                    fontWeight: theme.brightness == Brightness.light
+                        ? FontWeight.bold
+                        : FontWeight.normal,
+                  ),
+                ),
         ),
         TextButton(
           onPressed: _handleTerms,

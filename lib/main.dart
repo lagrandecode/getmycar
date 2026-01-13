@@ -10,6 +10,7 @@ import 'services/parking_service.dart';
 import 'services/ai_service.dart';
 import 'services/notification_service.dart';
 import 'services/fcm_service.dart';
+import 'services/revenuecat_service.dart';
 // import 'services/car_bluetooth_service.dart';
 // import 'services/car_location_capture.dart';
 import 'screens/home_screen.dart';
@@ -24,6 +25,7 @@ import 'screens/settings_screen.dart';
 import 'screens/onboarding_paywall_screen.dart';
 import 'screens/splash_screen.dart';
 import 'providers/theme_provider.dart';
+import 'providers/subscription_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -95,6 +97,15 @@ void main() async {
   } catch (e) {
     print('❌ FCM initialization failed: $e');
     print('⚠️  Push notifications may not work');
+  }
+  
+  // Initialize RevenueCat
+  try {
+    await RevenueCatService.instance.init();
+    print('✅ RevenueCat initialized successfully');
+  } catch (e) {
+    print('❌ RevenueCat initialization failed: $e');
+    print('⚠️  In-app purchases may not work');
   }
   
   // Initialize Car Bluetooth service for car connection detection
@@ -183,6 +194,7 @@ class MyApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
+        ChangeNotifierProvider(create: (_) => SubscriptionProvider()),
         Provider<AuthService>(create: (_) => AuthService()),
         Provider<ParkingService>(create: (_) => ParkingService()),
         Provider<AIService>(create: (_) => AIService()),
