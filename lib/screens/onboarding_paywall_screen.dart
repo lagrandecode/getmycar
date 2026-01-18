@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:video_player/video_player.dart';
+import 'package:purchases_flutter/purchases_flutter.dart';
 import '../services/revenuecat_service.dart';
+import '../services/notification_service.dart';
 
 /// Onboarding/Paywall screen with video slideshow and subscription options
 class OnboardingPaywallScreen extends StatefulWidget {
@@ -19,11 +21,60 @@ class _OnboardingPaywallScreenState extends State<OnboardingPaywallScreen> {
   bool _isPurchasing = false;
   bool _isRestoring = false;
   static const int videosPerSlide = 4;
+  
+  // Dynamic pricing
+  String? _monthlyPrice;
+  String? _yearlyPrice;
+  bool _isLoadingPrice = false;
 
   @override
   void initState() {
     super.initState();
     _initializeVideos();
+    _loadProductPrices();
+  }
+  
+  /// Load product prices from RevenueCat in user's local currency
+  Future<void> _loadProductPrices() async {
+    setState(() => _isLoadingPrice = true);
+    
+    try {
+      // Fetch products from RevenueCat
+      final products = await Purchases.getProducts([
+        RevenueCatService.monthlyProductId,
+        RevenueCatService.yearlyProductId,
+      ]);
+      
+      if (mounted) {
+        // Find monthly product
+        final monthlyProduct = products.firstWhere(
+          (p) => p.identifier == RevenueCatService.monthlyProductId,
+          orElse: () => products.isNotEmpty ? products.first : throw Exception('Product not found'),
+        );
+        
+        // Find yearly product
+        final yearlyProduct = products.firstWhere(
+          (p) => p.identifier == RevenueCatService.yearlyProductId,
+          orElse: () => products.length > 1 ? products[1] : throw Exception('Product not found'),
+        );
+        
+        setState(() {
+          // Format price with currency symbol (e.g., "$9.99" or "₦4,500")
+          _monthlyPrice = monthlyProduct.priceString;
+          _yearlyPrice = yearlyProduct.priceString;
+          _isLoadingPrice = false;
+        });
+      }
+    } catch (e) {
+      // Fallback to default prices
+      if (mounted) {
+        setState(() {
+          _monthlyPrice = '\$9.99';
+          _yearlyPrice = null; // Will show monthly only if yearly fails
+          _isLoadingPrice = false;
+        });
+      }
+    }
   }
 
   Future<void> _initializeVideos() async {
@@ -85,13 +136,10 @@ class _OnboardingPaywallScreenState extends State<OnboardingPaywallScreen> {
       
       if (mounted) {
         if (isPro) {
-          // Show success message
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('✅ Subscription activated! Enjoy your 3-day free trial.'),
-              backgroundColor: Colors.green,
-              duration: Duration(seconds: 3),
-            ),
+          // Show success notification
+          await NotificationService.showLocalNotification(
+            title: '✅ Subscription Activated!',
+            body: 'Enjoy your 3-day free trial.',
           );
           
           // Navigate to login screen (replace so user can't go back)
@@ -184,13 +232,45 @@ class _OnboardingPaywallScreenState extends State<OnboardingPaywallScreen> {
       }
     }
   }
-  final String policy = "https://drive.google.com/file/d/1rBy54sZjFmPrHDUoZxh4WOmR6Mu34tpw/view?usp=drive_link";
-  Uri get _url => Uri.parse(policy);
+  // Terms of Use (EULA) URL - Required by Apple
+  final String termsOfUseUrl = "https://sites.google.com/view/getmycarterms?usp=sharing";
+  
+  // Privacy Policy URL - Required by Apple
+  final String privacyPolicyUrl = "https://sites.google.com/view/getmycarprivacypolicy?usp=sharing";
 
   Future<void> _handleTerms() async {
-    // TODO: Navigate to terms screen or open URL
-    if(!await launchUrl(_url,mode: LaunchMode.externalApplication)){
-      throw Exception("Could not Launch $_url");
+    try {
+      final uri = Uri.parse(termsOfUseUrl);
+      if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+        throw Exception("Could not launch Terms of Use URL");
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Could not open Terms of Use: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _handlePrivacyPolicy() async {
+    try {
+      final uri = Uri.parse(privacyPolicyUrl);
+      if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+        throw Exception("Could not launch Privacy Policy URL");
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Could not open Privacy Policy: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 
@@ -212,20 +292,20 @@ class _OnboardingPaywallScreenState extends State<OnboardingPaywallScreen> {
           builder: (context, constraints) {
             final availableHeight = constraints.maxHeight;
             
-            return Padding(
-              padding: EdgeInsets.symmetric(
-                horizontal: horizontalPadding,
-                vertical: verticalPadding,
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
+            return SingleChildScrollView(
+              child: Padding(
+                padding: EdgeInsets.symmetric(
+                  horizontal: horizontalPadding,
+                  vertical: verticalPadding,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
                   // Top content: Title and Subtitle
-                  Flexible(
-                    flex: isSmallScreen ? 2 : 3,
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
+                  Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
                         Text(
                           'Never Lose Your Car Again',
                           style: textTheme.headlineLarge?.copyWith(
@@ -258,33 +338,23 @@ class _OnboardingPaywallScreenState extends State<OnboardingPaywallScreen> {
                         ),
                       ],
                     ),
-                  ),
                   
                   SizedBox(height: isSmallScreen ? 12 : 16),
                   
                   // Media section: Video grid
-                  Flexible(
-                    flex: isSmallScreen ? 5 : 6,
-                    child: LayoutBuilder(
-                      builder: (context, constraints) {
-                        return _buildVideoCarousel(theme, constraints.maxHeight);
-                      },
-                    ),
-                  ),
+                  _buildVideoCarousel(theme, isSmallScreen ? 250.0 : 300.0),
                   
                   SizedBox(height: isSmallScreen ? 12 : 16),
                   
                   // Paywall area
-                  Flexible(
-                    flex: isSmallScreen ? 3 : 4,
-                    child: _buildPaywallSection(theme, textTheme, isSmallScreen),
-                  ),
+                  _buildPaywallSection(theme, textTheme, isSmallScreen),
                   
                   SizedBox(height: isSmallScreen ? 8 : 12),
                   
                   // Footer links
                   _buildFooterLinks(theme, textTheme),
-                ],
+                  ],
+                ),
               ),
             );
           },
@@ -397,45 +467,62 @@ class _OnboardingPaywallScreenState extends State<OnboardingPaywallScreen> {
 
 
   Widget _buildPaywallSection(ThemeData theme, TextTheme textTheme, bool isSmallScreen) {
-    // Calculate pricing text font size safely
-    final baseFontSize = textTheme.bodySmall?.fontSize;
-    final pricingFontSize = baseFontSize != null && isSmallScreen 
-        ? baseFontSize * 0.9 
-        : baseFontSize;
+    // Get the price to display (with fallback)
+    final displayPrice = _monthlyPrice ?? '\$9.99';
     
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        // "No payment due now" row
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.check_circle,
-              color: theme.colorScheme.primary,
-              size: isSmallScreen ? 18 : 20,
-            ),
-            SizedBox(width: isSmallScreen ? 6 : 8),
-            Flexible(
-              child: Text(
-                'No payment due now',
-                style: textTheme.bodyMedium?.copyWith(
+        // Primary pricing - MUST be prominent (Apple requirement)
+        _isLoadingPrice
+            ? SizedBox(
+                height: isSmallScreen ? 24 : 28,
+                child: Center(
+                  child: SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                        theme.brightness == Brightness.light
+                            ? Colors.black
+                            : Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
+              )
+            : Text(
+                '$displayPrice/month',
+                style: textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.bold,
                   color: theme.brightness == Brightness.light
                       ? Colors.black
-                      : theme.colorScheme.primary,
-                  fontWeight: theme.brightness == Brightness.light
-                      ? FontWeight.bold
-                      : FontWeight.w500,
+                      : Colors.white,
+                  fontSize: isSmallScreen 
+                      ? textTheme.titleLarge?.fontSize 
+                      : textTheme.headlineSmall?.fontSize,
+                ),
+                textAlign: TextAlign.center,
+              ),
+        SizedBox(height: isSmallScreen ? 4 : 6),
+        
+        // Free trial info - secondary (less prominent)
+        _isLoadingPrice
+            ? const SizedBox.shrink()
+            : Text(
+                '3-day free trial, then $displayPrice/month',
+                style: textTheme.bodyMedium?.copyWith(
+                  color: theme.brightness == Brightness.light
+                      ? Colors.black87
+                      : theme.colorScheme.onSurface.withValues(alpha: 0.7),
                   fontSize: isSmallScreen 
                       ? textTheme.bodySmall?.fontSize 
                       : textTheme.bodyMedium?.fontSize,
                 ),
                 textAlign: TextAlign.center,
               ),
-            ),
-          ],
-        ),
         SizedBox(height: isSmallScreen ? 12 : 16),
         
         // Primary CTA button
@@ -462,7 +549,7 @@ class _OnboardingPaywallScreenState extends State<OnboardingPaywallScreen> {
                   ),
                 )
               : Text(
-                  'Try for free 🙌',
+                  'Start Free Trial',
                   style: textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.bold,
                     fontSize: isSmallScreen 
@@ -473,17 +560,16 @@ class _OnboardingPaywallScreenState extends State<OnboardingPaywallScreen> {
         ),
         SizedBox(height: isSmallScreen ? 8 : 12),
         
-        // Pricing
+        // Subscription details
         Text(
-          '3 days free, then \$9.99/mo',
+          'Auto-renews monthly. Cancel anytime.',
           style: textTheme.bodySmall?.copyWith(
             color: theme.brightness == Brightness.light
-                ? Colors.black
-                : theme.colorScheme.onSurface.withValues(alpha: 0.6),
-            fontWeight: theme.brightness == Brightness.light
-                ? FontWeight.bold
-                : FontWeight.normal,
-            fontSize: pricingFontSize,
+                ? Colors.black54
+                : theme.colorScheme.onSurface.withValues(alpha: 0.5),
+            fontSize: isSmallScreen 
+                ? textTheme.bodySmall?.fontSize 
+                : textTheme.bodySmall?.fontSize,
           ),
           textAlign: TextAlign.center,
         ),
@@ -492,11 +578,63 @@ class _OnboardingPaywallScreenState extends State<OnboardingPaywallScreen> {
   }
 
   Widget _buildFooterLinks(ThemeData theme, TextTheme textTheme) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+    return Column(
       children: [
+        // Required links - Terms of Use and Privacy Policy (Apple requirement)
+        Wrap(
+          alignment: WrapAlignment.center,
+          spacing: 12,
+          runSpacing: 8,
+          children: [
+            TextButton(
+              onPressed: _handleTerms,
+              style: TextButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                minimumSize: Size.zero,
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+              child: Text(
+                'Terms of Use',
+                style: textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.primary,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+            Text(
+              '•',
+              style: textTheme.bodySmall?.copyWith(
+                color: theme.brightness == Brightness.light
+                    ? Colors.black54
+                    : theme.colorScheme.onSurface.withValues(alpha: 0.5),
+              ),
+            ),
+            TextButton(
+              onPressed: _handlePrivacyPolicy,
+              style: TextButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                minimumSize: Size.zero,
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+              child: Text(
+                'Privacy Policy',
+                style: textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.primary,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+          ],
+        ),
+        SizedBox(height: 8),
+        // Restore purchases button
         TextButton(
           onPressed: (_isPurchasing || _isRestoring) ? null : _handleRestore,
+          style: TextButton.styleFrom(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+            minimumSize: Size.zero,
+            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          ),
           child: _isRestoring
               ? SizedBox(
                   height: 16,
@@ -511,7 +649,7 @@ class _OnboardingPaywallScreenState extends State<OnboardingPaywallScreen> {
                   ),
                 )
               : Text(
-                  'Restore',
+                  'Restore Purchases',
                   style: textTheme.bodySmall?.copyWith(
                     color: theme.brightness == Brightness.light
                         ? Colors.black
@@ -521,20 +659,6 @@ class _OnboardingPaywallScreenState extends State<OnboardingPaywallScreen> {
                         : FontWeight.normal,
                   ),
                 ),
-        ),
-        TextButton(
-          onPressed: _handleTerms,
-          child: Text(
-            'Terms',
-            style: textTheme.bodySmall?.copyWith(
-              color: theme.brightness == Brightness.light
-                  ? Colors.black
-                  : theme.colorScheme.onSurface.withValues(alpha: 0.6),
-              fontWeight: theme.brightness == Brightness.light
-                  ? FontWeight.bold
-                  : FontWeight.normal,
-            ),
-          ),
         ),
       ],
     );

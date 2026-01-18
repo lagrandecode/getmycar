@@ -506,7 +506,7 @@ class _NavigateScreenState extends State<NavigateScreen> {
                         setState(() => _mapError = null);
                         
                         // Wait a bit for map to initialize, then update camera
-                        await Future.delayed(const Duration(milliseconds: 500));
+                        await Future.delayed(const Duration(milliseconds: 500),);
                         if (_currentPosition != null) {
                           _updateCameraToShowBothLocations();
                         }

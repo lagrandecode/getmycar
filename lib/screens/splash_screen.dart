@@ -143,6 +143,27 @@ class _SplashScreenState extends State<SplashScreen>
                 width: 200,
                 height: 200,
                 fit: BoxFit.contain,
+                errorBuilder: (context, error, stackTrace) {
+                  // Fallback if image fails to load
+                  return Image.asset(
+                    'assets/icon/app_icon.png',
+                    width: 200,
+                    height: 200,
+                    fit: BoxFit.contain,
+                    errorBuilder: (context, error, stackTrace) {
+                      // Final fallback - show a placeholder
+                      return Container(
+                        width: 200,
+                        height: 200,
+                        decoration: BoxDecoration(
+                          color: Colors.grey[300],
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(Icons.directions_car, size: 100),
+                      );
+                    },
+                  );
+                },
               ),
             ),
           ],

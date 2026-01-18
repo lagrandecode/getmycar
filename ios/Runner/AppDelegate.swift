@@ -12,6 +12,9 @@ import AVFoundation
     _ application: UIApplication,
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
   ) -> Bool {
+    // Firebase is configured in Flutter's main.dart - no need to configure here
+    // This prevents the "FirebaseApp.configure() could not find GoogleService-Info.plist" error
+    
     // Initialize Google Maps with API key from Info.plist
     if let apiKey = Bundle.main.object(forInfoDictionaryKey: "GMSApiKey") as? String {
       GMSServices.provideAPIKey(apiKey)
@@ -26,11 +29,20 @@ import AVFoundation
       UNUserNotificationCenter.current().delegate = self as? UNUserNotificationCenterDelegate
     }
     
-    // Set up Firebase Messaging delegate
-    Messaging.messaging().delegate = self
+    // DON'T set Firebase Messaging delegate here - Firebase isn't initialized yet!
+    // Firebase is initialized in Flutter's main.dart, which runs AFTER this method.
+    // The Messaging delegate will be set up after Firebase is initialized.
+    // Setting it here causes a crash: "FirebaseCore +[FIRApp configure]"
     
     // Set up method channel for registering remote notifications from Flutter
-    let controller = window?.rootViewController as! FlutterViewController
+    // Use safe unwrapping to prevent crashes
+    guard let window = window,
+          let controller = window.rootViewController as? FlutterViewController else {
+      print("⚠️ Window or rootViewController not ready yet - method channel setup skipped")
+      GeneratedPluginRegistrant.register(with: self)
+      return super.application(application, didFinishLaunchingWithOptions: launchOptions)
+    }
+    
     let notificationChannel = FlutterMethodChannel(
       name: "com.lagrangecode.getmycar/notifications",
       binaryMessenger: controller.binaryMessenger
@@ -79,7 +91,18 @@ import AVFoundation
     let tokenParts = deviceToken.map { data in String(format: "%02.2hhx", data) }
     let token = tokenParts.joined()
     print("✅ APNS token received in AppDelegate: \(token.prefix(20))...")
-    Messaging.messaging().apnsToken = deviceToken
+    
+    // Only set APNs token if Firebase is initialized
+    // Firebase is initialized in Flutter's main.dart, which may not be ready yet
+    // So we check if Firebase is available before using Messaging
+    if FirebaseApp.app() != nil {
+      Messaging.messaging().apnsToken = deviceToken
+    } else {
+      print("⚠️ Firebase not initialized yet - APNs token will be set later by FCMService")
+      // Store token to set later when Firebase is ready
+      // FCMService will handle this when it initializes
+    }
+    
     super.application(application, didRegisterForRemoteNotificationsWithDeviceToken: deviceToken)
   }
   

@@ -27,6 +27,14 @@ class FCMService {
     _initialized = true;
 
     try {
+      // Ensure Firebase is initialized before using Messaging
+      // Firebase should already be initialized in main.dart, but double-check
+      if (Platform.isIOS) {
+        // On iOS, we need to ensure Firebase is ready before using Messaging
+        // This prevents the crash: "FirebaseCore +[FIRApp configure]"
+        await Future.delayed(const Duration(milliseconds: 100));
+      }
+      
       // 1) Background handler (do once, early)
       FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
 

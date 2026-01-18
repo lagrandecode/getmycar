@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io' show Platform;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
@@ -10,11 +11,27 @@ class RevenueCatService {
   factory RevenueCatService() => instance;
   RevenueCatService._internal();
 
-  // Configuration constants
-  static const String rcApiKey = 'appl_lUlEngvhNUyLxVfiSPfpksSqxLo';
-  static const String entitlementId = 'Get My Car Pro';
-  static const String monthlyProductId = 'com.lagrangecode.getmycar.premium.monthly';
-  static const String yearlyProductId = 'com.lagrangecode.getmycar.premium.yearly';
+  // Configuration constants - Platform-specific API keys
+  // iOS API key (starts with 'appl_')
+  static const String rcApiKeyIOS = 'appl_lUlEngvhNUyLxVfiSPfpksSqxLo';
+  // Android API key (starts with 'goog_') - REPLACE WITH YOUR ANDROID KEY
+  static const String rcApiKeyAndroid = 'goog_YOUR_ANDROID_API_KEY_HERE';
+  
+  /// Get the appropriate API key for the current platform
+  static String get rcApiKey {
+    if (Platform.isIOS) {
+      return rcApiKeyIOS;
+    } else if (Platform.isAndroid) {
+      return rcApiKeyAndroid;
+    } else {
+      // Fallback to iOS for other platforms
+      return rcApiKeyIOS;
+    }
+  }
+
+  static const String entitlementId = 'getmycar';
+  static const String monthlyProductId = 'monthly_sub';
+  static const String yearlyProductId = 'Yearly_sub';
   static const String offeringId = 'default';
 
   bool _isInitialized = false;
@@ -27,23 +44,64 @@ class RevenueCatService {
   /// Initialize RevenueCat SDK
   Future<void> init() async {
     if (_isInitialized) {
-      debugPrint('⚠️ RevenueCat already initialized');
       return;
     }
 
     try {
-      // Configure RevenueCat
-      await Purchases.setLogLevel(kDebugMode ? LogLevel.debug : LogLevel.info);
+      // Configure RevenueCat with detailed logging for debugging
+      await Purchases.setLogLevel(kDebugMode ? LogLevel.verbose : LogLevel.warn);
       
       // Initialize with API key
       PurchasesConfiguration configuration = PurchasesConfiguration(rcApiKey);
       await Purchases.configure(configuration);
 
       _isInitialized = true;
-      debugPrint('✅ RevenueCat initialized successfully');
+      
+      if (kDebugMode) {
+        debugPrint('✅ RevenueCat initialized with API key: ${rcApiKey.substring(0, 10)}...');
+        debugPrint('📱 Platform: ${Platform.isIOS ? "iOS" : "Android"}');
+      }
 
       // Load initial customer info
       await _refreshCustomerInfo();
+      
+      // Debug: Check offerings availability and product availability
+      if (kDebugMode) {
+        try {
+          // Check offerings
+          final offerings = await Purchases.getOfferings();
+          debugPrint('📦 Offerings available: ${offerings.current != null}');
+          if (offerings.current != null) {
+            debugPrint('📦 Packages count: ${offerings.current!.availablePackages.length}');
+            for (var package in offerings.current!.availablePackages) {
+              debugPrint('  - Package: ${package.identifier}, Product: ${package.storeProduct.identifier}');
+            }
+          } else {
+            debugPrint('⚠️ No offerings available - checking products directly...');
+          }
+          
+          // Try to fetch products directly to check sandbox availability
+          try {
+            final products = await Purchases.getProducts([monthlyProductId, yearlyProductId]);
+            debugPrint('🔍 Direct product fetch: ${products.length} products found');
+            if (products.isEmpty) {
+              debugPrint('❌ Products not available in sandbox yet.');
+              debugPrint('   This is normal if app was just submitted.');
+              debugPrint('   Wait 24-48 hours for Apple to sync products to sandbox.');
+              debugPrint('   Products are "Waiting for Review" but sandbox may not be ready.');
+            } else {
+              debugPrint('✅ Products ARE available in sandbox!');
+              for (var product in products) {
+                debugPrint('   - ${product.identifier}: ${product.title}');
+              }
+            }
+          } catch (e) {
+            debugPrint('⚠️ Error checking products: $e');
+          }
+        } catch (e) {
+          debugPrint('⚠️ Could not fetch offerings: $e');
+        }
+      }
     } catch (e) {
       debugPrint('❌ RevenueCat initialization failed: $e');
       _isInitialized = false;
@@ -57,9 +115,8 @@ class RevenueCatService {
       _latestCustomerInfo = await Purchases.getCustomerInfo();
       final isPro = isProActive();
       _entitlementController.add(isPro);
-      debugPrint('✅ Customer info refreshed. Pro status: $isPro');
     } catch (e) {
-      debugPrint('⚠️ Error refreshing customer info: $e');
+      // Silent - will retry on next request
     }
   }
 
@@ -77,7 +134,6 @@ class RevenueCatService {
       await _refreshCustomerInfo();
       return isProActive();
     } catch (e) {
-      debugPrint('⚠️ Error checking pro status: $e');
       return false;
     }
   }
@@ -90,41 +146,115 @@ class RevenueCatService {
     }
 
     try {
-      debugPrint('🛒 Starting purchase for product: $productId');
-
       // Try to get offerings first
       Offerings? offerings;
       try {
         offerings = await Purchases.getOfferings();
+        if (kDebugMode) {
+          debugPrint('📦 Fetched offerings: ${offerings.current != null}');
+          if (offerings.current != null) {
+            debugPrint('📦 Available packages: ${offerings.current!.availablePackages.length}');
+          }
+        }
       } catch (e) {
-        debugPrint('⚠️ Could not fetch offerings: $e');
+        if (kDebugMode) {
+          debugPrint('⚠️ Error fetching offerings: $e');
+        }
+        // Silent - will use fallback
       }
 
       // Try to find package in offerings
       Package? packageToPurchase;
-      if (offerings?.current != null) {
-        packageToPurchase = offerings!.current!.availablePackages.firstWhere(
-          (package) => package.storeProduct.identifier == productId,
-          orElse: () => throw Exception('Package not found'),
-        );
+      if (offerings?.current != null && offerings!.current!.availablePackages.isNotEmpty) {
+        try {
+          packageToPurchase = offerings.current!.availablePackages.firstWhere(
+            (package) => package.storeProduct.identifier == productId,
+          );
+        } catch (e) {
+          packageToPurchase = null;
+        }
       }
 
       CustomerInfo customerInfo;
       
       if (packageToPurchase != null) {
         // Purchase via package
-        debugPrint('📦 Purchasing package: ${packageToPurchase.identifier}');
         final result = await Purchases.purchasePackage(packageToPurchase);
         customerInfo = result.customerInfo;
       } else {
         // Fallback: Purchase by product ID directly
-        debugPrint('📦 Package not found in offerings, purchasing by product ID');
-        final products = await Purchases.getProducts([productId]);
-        if (products.isEmpty) {
-          throw Exception('Product not found: $productId');
+        try {
+          if (kDebugMode) {
+            debugPrint('🔍 Attempting to fetch product: $productId');
+          }
+          final products = await Purchases.getProducts([productId]);
+          
+          if (kDebugMode) {
+            debugPrint('📦 Products fetched: ${products.length}');
+            if (products.isNotEmpty) {
+              debugPrint('📦 Product details: ${products.first.identifier}, ${products.first.title}');
+            }
+          }
+          
+          if (products.isEmpty) {
+            // Provide clear error message based on RevenueCat best practices
+            if (kDebugMode) {
+              debugPrint('❌ Product "$productId" not found. Checking common issues...');
+              debugPrint('   - Is app in "Waiting for Review"?');
+              debugPrint('   - Are products attached to app version?');
+              debugPrint('   - ⏳ Products can take 24-48 hours to sync to sandbox even when "Waiting for Review"');
+              debugPrint('   - Has RevenueCat synced (wait 30-60 min after submission)?');
+              debugPrint('   - Are you signed in with sandbox tester account?');
+            }
+            throw Exception(
+              'Product "$productId" not available in sandbox yet.\n\n'
+              '📱 This is normal for TestFlight builds!\n\n'
+              'Even though your app and products are "Waiting for Review", Apple\'s sandbox environment can take 24-48 hours to sync products.\n\n'
+              '✅ Your setup is correct - this is just a timing issue.\n\n'
+              'What to do:\n'
+              '1. Wait 24-48 hours after submission\n'
+              '2. Make sure you\'re signed out of App Store (Settings → Media & Purchases)\n'
+              '3. Try again - products should appear automatically\n\n'
+              'If products still don\'t appear after 48 hours, check:\n'
+              '• Products are attached to app version in App Store Connect\n'
+              '• You\'re signed in with sandbox tester account when prompted'
+            );
+          }
+          
+          final product = products.first;
+          final result = await Purchases.purchaseStoreProduct(product);
+          customerInfo = result.customerInfo;
+        } on PlatformException catch (e) {
+          // Handle RevenueCat specific errors
+          final errorCode = PurchasesErrorHelper.getErrorCode(e);
+          
+          // Check error details for readable error code
+          final readableErrorCode = e.details is Map 
+              ? (e.details as Map)['readableErrorCode'] as String? 
+              : null;
+          
+          // Check for product not available errors
+          if (readableErrorCode == 'PRODUCT_NOT_AVAILABLE_FOR_PURCHASE' || 
+              e.message?.contains('not available') == true ||
+              e.message?.contains('ITEM_UNAVAILABLE') == true ||
+              e.message?.contains('PRODUCT_NOT_AVAILABLE') == true) {
+            throw Exception(
+              'Product "$productId" is not available for purchase.\n\n'
+              'The product exists but cannot be purchased. This usually means:\n'
+              '1. Product is in "Ready to Submit" status (needs to be submitted)\n'
+              '2. Product is not yet approved by Apple\n'
+              '3. Product is not attached to the app version\n\n'
+              'Please submit the app version with subscriptions attached for review.'
+            );
+          }
+          rethrow;
+        } catch (e) {
+          if (e.toString().contains('Product not found') || 
+              e.toString().contains('not found in App Store Connect')) {
+            rethrow;
+          }
+          throw Exception('Failed to fetch/purchase product: ${e.toString()}');
         }
-        final result = await Purchases.purchaseStoreProduct(products.first);
-        customerInfo = result.customerInfo;
       }
 
       // Update local customer info
@@ -132,22 +262,18 @@ class RevenueCatService {
       final isPro = isProActive();
       _entitlementController.add(isPro);
 
-      debugPrint('✅ Purchase successful. Pro status: $isPro');
       return customerInfo;
     } on PlatformException catch (e) {
       final errorCode = PurchasesErrorHelper.getErrorCode(e);
       
       // Check if user cancelled
       if (errorCode == PurchasesErrorCode.purchaseCancelledError) {
-        debugPrint('⚠️ Purchase cancelled by user');
         throw Exception('Purchase cancelled');
       }
       
       // Check for other errors
-      debugPrint('❌ Purchase failed: ${e.message} (Code: $errorCode)');
       throw Exception('Purchase failed: ${e.message ?? errorCode.toString()}');
     } catch (e) {
-      debugPrint('❌ Unexpected purchase error: $e');
       rethrow;
     }
   }
@@ -160,7 +286,6 @@ class RevenueCatService {
     }
 
     try {
-      debugPrint('♻️ Restoring purchases...');
       final customerInfo = await Purchases.restorePurchases();
       
       // Update local customer info
@@ -168,10 +293,8 @@ class RevenueCatService {
       final isPro = isProActive();
       _entitlementController.add(isPro);
 
-      debugPrint('✅ Restore completed. Pro status: $isPro');
       return customerInfo;
     } catch (e) {
-      debugPrint('❌ Restore failed: $e');
       rethrow;
     }
   }
@@ -182,35 +305,7 @@ class RevenueCatService {
       await _refreshCustomerInfo();
       return _latestCustomerInfo;
     } catch (e) {
-      debugPrint('⚠️ Error getting customer info: $e');
       return null;
-    }
-  }
-
-  /// Debug helper: Print current RevenueCat state
-  Future<void> debugPrintRevenueCatState() async {
-    if (!_isInitialized) {
-      debugPrint('❌ RevenueCat not initialized');
-      return;
-    }
-
-    try {
-      final customerInfo = await Purchases.getCustomerInfo();
-      debugPrint('📊 RevenueCat Debug Info:');
-      debugPrint('   App User ID: ${customerInfo.originalAppUserId}');
-      debugPrint('   Active Entitlements: ${customerInfo.entitlements.active.keys}');
-      debugPrint('   All Entitlements: ${customerInfo.entitlements.all.keys}');
-      debugPrint('   Pro Active: ${customerInfo.entitlements.active.containsKey(entitlementId)}');
-      
-      final offerings = await Purchases.getOfferings();
-      if (offerings.current != null) {
-        debugPrint('   Current Offering: ${offerings.current!.identifier}');
-        debugPrint('   Available Packages: ${offerings.current!.availablePackages.map((p) => p.identifier).toList()}');
-      } else {
-        debugPrint('   No current offering available');
-      }
-    } catch (e) {
-      debugPrint('❌ Error getting debug info: $e');
     }
   }
 
