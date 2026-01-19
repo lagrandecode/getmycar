@@ -14,8 +14,8 @@ class RevenueCatService {
   // Configuration constants - Platform-specific API keys
   // iOS API key (starts with 'appl_')
   static const String rcApiKeyIOS = 'appl_lUlEngvhNUyLxVfiSPfpksSqxLo';
-  // Android API key (starts with 'goog_') - REPLACE WITH YOUR ANDROID KEY
-  static const String rcApiKeyAndroid = 'goog_YOUR_ANDROID_API_KEY_HERE';
+  // Android API key (starts with 'goog_')
+  static const String rcApiKeyAndroid = 'goog_rgtwHfnntJYJClPFpGHitgBNmSI';
   
   /// Get the appropriate API key for the current platform
   static String get rcApiKey {

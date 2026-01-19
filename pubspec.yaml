@@ -1,7 +1,7 @@
 name: findmycar
 description: A smart parking assistant app
 publish_to: 'none'
-version: 2.3.3+4
+version: 2.3.3+7
 
 
 environment:

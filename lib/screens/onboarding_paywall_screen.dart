@@ -156,8 +156,8 @@ class _OnboardingPaywallScreenState extends State<OnboardingPaywallScreen> {
           );
           // Still navigate to login
           if (mounted) {
-            context.go('/login');
-          }
+    context.go('/login');
+  }
         }
       }
     } catch (e) {
@@ -218,14 +218,14 @@ class _OnboardingPaywallScreenState extends State<OnboardingPaywallScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
+    ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Restore failed: ${e.toString().replaceAll('Exception: ', '')}'),
             backgroundColor: Colors.red,
             duration: const Duration(seconds: 3),
           ),
-        );
-      }
+    );
+  }
     } finally {
       if (mounted) {
         setState(() => _isRestoring = false);
@@ -294,18 +294,18 @@ class _OnboardingPaywallScreenState extends State<OnboardingPaywallScreen> {
             
             return SingleChildScrollView(
               child: Padding(
-                padding: EdgeInsets.symmetric(
-                  horizontal: horizontalPadding,
-                  vertical: verticalPadding,
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
+              padding: EdgeInsets.symmetric(
+                horizontal: horizontalPadding,
+                vertical: verticalPadding,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
                   // Top content: Title and Subtitle
                   Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
+                      mainAxisAlignment: MainAxisAlignment.center,
                     mainAxisSize: MainAxisSize.min,
-                    children: [
+                      children: [
                         Text(
                           'Never Lose Your Car Again',
                           style: textTheme.headlineLarge?.copyWith(
@@ -337,7 +337,7 @@ class _OnboardingPaywallScreenState extends State<OnboardingPaywallScreen> {
                           overflow: TextOverflow.ellipsis,
                         ),
                       ],
-                    ),
+                  ),
                   
                   SizedBox(height: isSmallScreen ? 12 : 16),
                   
@@ -353,7 +353,7 @@ class _OnboardingPaywallScreenState extends State<OnboardingPaywallScreen> {
                   
                   // Footer links
                   _buildFooterLinks(theme, textTheme),
-                  ],
+                ],
                 ),
               ),
             );
@@ -505,7 +505,7 @@ class _OnboardingPaywallScreenState extends State<OnboardingPaywallScreen> {
                       : textTheme.headlineSmall?.fontSize,
                 ),
                 textAlign: TextAlign.center,
-              ),
+            ),
         SizedBox(height: isSmallScreen ? 4 : 6),
         
         // Free trial info - secondary (less prominent)
@@ -522,7 +522,7 @@ class _OnboardingPaywallScreenState extends State<OnboardingPaywallScreen> {
                       : textTheme.bodyMedium?.fontSize,
                 ),
                 textAlign: TextAlign.center,
-              ),
+        ),
         SizedBox(height: isSmallScreen ? 12 : 16),
         
         // Primary CTA button
@@ -550,13 +550,13 @@ class _OnboardingPaywallScreenState extends State<OnboardingPaywallScreen> {
                 )
               : Text(
                   'Start Free Trial',
-                  style: textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    fontSize: isSmallScreen 
-                        ? textTheme.bodyLarge?.fontSize 
-                        : textTheme.titleMedium?.fontSize,
-                  ),
-                ),
+            style: textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.bold,
+              fontSize: isSmallScreen 
+                  ? textTheme.bodyLarge?.fontSize 
+                  : textTheme.titleMedium?.fontSize,
+            ),
+          ),
         ),
         SizedBox(height: isSmallScreen ? 8 : 12),
         
@@ -585,15 +585,15 @@ class _OnboardingPaywallScreenState extends State<OnboardingPaywallScreen> {
           alignment: WrapAlignment.center,
           spacing: 12,
           runSpacing: 8,
-          children: [
-            TextButton(
+      children: [
+        TextButton(
               onPressed: _handleTerms,
               style: TextButton.styleFrom(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                 minimumSize: Size.zero,
                 tapTargetSize: MaterialTapTargetSize.shrinkWrap,
               ),
-              child: Text(
+          child: Text(
                 'Terms of Use',
                 style: textTheme.bodySmall?.copyWith(
                   color: theme.colorScheme.primary,
@@ -603,8 +603,8 @@ class _OnboardingPaywallScreenState extends State<OnboardingPaywallScreen> {
             ),
             Text(
               '•',
-              style: textTheme.bodySmall?.copyWith(
-                color: theme.brightness == Brightness.light
+            style: textTheme.bodySmall?.copyWith(
+              color: theme.brightness == Brightness.light
                     ? Colors.black54
                     : theme.colorScheme.onSurface.withValues(alpha: 0.5),
               ),
@@ -621,9 +621,9 @@ class _OnboardingPaywallScreenState extends State<OnboardingPaywallScreen> {
                 style: textTheme.bodySmall?.copyWith(
                   color: theme.colorScheme.primary,
                   fontWeight: FontWeight.w500,
-                ),
-              ),
             ),
+          ),
+        ),
           ],
         ),
         SizedBox(height: 8),
@@ -650,15 +650,15 @@ class _OnboardingPaywallScreenState extends State<OnboardingPaywallScreen> {
                 )
               : Text(
                   'Restore Purchases',
-                  style: textTheme.bodySmall?.copyWith(
-                    color: theme.brightness == Brightness.light
-                        ? Colors.black
-                        : theme.colorScheme.onSurface.withValues(alpha: 0.6),
-                    fontWeight: theme.brightness == Brightness.light
-                        ? FontWeight.bold
-                        : FontWeight.normal,
-                  ),
-                ),
+            style: textTheme.bodySmall?.copyWith(
+              color: theme.brightness == Brightness.light
+                  ? Colors.black
+                  : theme.colorScheme.onSurface.withValues(alpha: 0.6),
+              fontWeight: theme.brightness == Brightness.light
+                  ? FontWeight.bold
+                  : FontWeight.normal,
+            ),
+          ),
         ),
       ],
     );
