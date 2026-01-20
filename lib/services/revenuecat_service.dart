@@ -206,19 +206,14 @@ class RevenueCatService {
               debugPrint('   - Has RevenueCat synced (wait 30-60 min after submission)?');
               debugPrint('   - Are you signed in with sandbox tester account?');
             }
-            throw Exception(
-              'Product "$productId" not available in sandbox yet.\n\n'
-              '📱 This is normal for TestFlight builds!\n\n'
-              'Even though your app and products are "Waiting for Review", Apple\'s sandbox environment can take 24-48 hours to sync products.\n\n'
-              '✅ Your setup is correct - this is just a timing issue.\n\n'
-              'What to do:\n'
-              '1. Wait 24-48 hours after submission\n'
-              '2. Make sure you\'re signed out of App Store (Settings → Media & Purchases)\n'
-              '3. Try again - products should appear automatically\n\n'
-              'If products still don\'t appear after 48 hours, check:\n'
-              '• Products are attached to app version in App Store Connect\n'
-              '• You\'re signed in with sandbox tester account when prompted'
-            );
+            // Throw user-friendly error (technical details logged in debug mode only)
+            if (kDebugMode) {
+              debugPrint('❌ Product "$productId" not available in sandbox yet.');
+              debugPrint('   - This is normal for TestFlight builds!');
+              debugPrint('   - Products can take 24-48 hours to sync to sandbox');
+              debugPrint('   - Your setup is correct - this is just a timing issue');
+            }
+            throw Exception('Subscription temporarily unavailable. Please try again later.');
           }
           
           final product = products.first;
@@ -238,22 +233,24 @@ class RevenueCatService {
               e.message?.contains('not available') == true ||
               e.message?.contains('ITEM_UNAVAILABLE') == true ||
               e.message?.contains('PRODUCT_NOT_AVAILABLE') == true) {
-            throw Exception(
-              'Product "$productId" is not available for purchase.\n\n'
-              'The product exists but cannot be purchased. This usually means:\n'
-              '1. Product is in "Ready to Submit" status (needs to be submitted)\n'
-              '2. Product is not yet approved by Apple\n'
-              '3. Product is not attached to the app version\n\n'
-              'Please submit the app version with subscriptions attached for review.'
-            );
+            if (kDebugMode) {
+              debugPrint('❌ Product "$productId" is not available for purchase.');
+              debugPrint('   - Product may be in "Ready to Submit" status');
+              debugPrint('   - Product may not be attached to app version');
+            }
+            throw Exception('Subscription temporarily unavailable. Please try again later.');
           }
           rethrow;
         } catch (e) {
           if (e.toString().contains('Product not found') || 
-              e.toString().contains('not found in App Store Connect')) {
+              e.toString().contains('not found in App Store Connect') ||
+              e.toString().contains('temporarily unavailable')) {
             rethrow;
           }
-          throw Exception('Failed to fetch/purchase product: ${e.toString()}');
+          if (kDebugMode) {
+            debugPrint('❌ Failed to fetch/purchase product: $e');
+          }
+          throw Exception('Unable to complete purchase. Please try again later.');
         }
       }
 
@@ -271,8 +268,13 @@ class RevenueCatService {
         throw Exception('Purchase cancelled');
       }
       
-      // Check for other errors
-      throw Exception('Purchase failed: ${e.message ?? errorCode.toString()}');
+      // Log technical details for debugging
+      if (kDebugMode) {
+        debugPrint('❌ Purchase error: ${e.message ?? errorCode.toString()}');
+      }
+      
+      // User-friendly error message
+      throw Exception('Unable to complete purchase. Please try again later.');
     } catch (e) {
       rethrow;
     }

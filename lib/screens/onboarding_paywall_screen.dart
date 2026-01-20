@@ -162,9 +162,26 @@ class _OnboardingPaywallScreenState extends State<OnboardingPaywallScreen> {
       }
     } catch (e) {
       if (mounted) {
-        final errorMessage = e.toString().contains('cancelled') 
-            ? 'Purchase was cancelled'
-            : 'Purchase failed: ${e.toString().replaceAll('Exception: ', '')}';
+        // User-friendly error messages (hide technical details)
+        String errorMessage;
+        if (e.toString().contains('cancelled')) {
+          errorMessage = 'Purchase was cancelled';
+        } else if (e.toString().contains('Product not found') || 
+                   e.toString().contains('not available')) {
+          // Generic message for product availability issues
+          errorMessage = 'Subscription is temporarily unavailable. Please try again later or contact support.';
+        } else if (e.toString().contains('network') || 
+                   e.toString().contains('connection')) {
+          errorMessage = 'Connection error. Please check your internet and try again.';
+        } else {
+          // Generic error message for all other cases
+          errorMessage = 'Unable to complete purchase. Please try again or contact support if the issue persists.';
+        }
+        
+        // Log technical details for debugging (not shown to users)
+        if (kDebugMode) {
+          debugPrint('❌ Purchase error (technical): $e');
+        }
         
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -218,14 +235,29 @@ class _OnboardingPaywallScreenState extends State<OnboardingPaywallScreen> {
       }
     } catch (e) {
       if (mounted) {
-    ScaffoldMessenger.of(context).showSnackBar(
+        // User-friendly error message for restore
+        String errorMessage;
+        if (e.toString().contains('network') || 
+            e.toString().contains('connection')) {
+          errorMessage = 'Connection error. Please check your internet and try again.';
+        } else {
+          errorMessage = 'Unable to restore purchases. Please try again later.';
+        }
+        
+        // Log technical details for debugging (not shown to users)
+        if (kDebugMode) {
+          debugPrint('❌ Restore error (technical): $e');
+        }
+        
+        ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Restore failed: ${e.toString().replaceAll('Exception: ', '')}'),
+            content: Text(errorMessage),
             backgroundColor: Colors.red,
             duration: const Duration(seconds: 3),
           ),
-    );
-  }
+        );
+      }
+    }
     } finally {
       if (mounted) {
         setState(() => _isRestoring = false);
