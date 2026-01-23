@@ -1,8 +1,26 @@
 import 'package:geolocator/geolocator.dart';
 import 'dart:async';
+import 'package:flutter/material.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'dart:io';
+import '../widgets/location_disclosure_dialog.dart';
 
 class LocationService {
-  Future<bool> checkPermissions() async {
+  static bool _hasShownDisclosure = false;
+
+  /// Show prominent disclosure before requesting location permission (required by Google Play)
+  /// Returns true if user accepted, false if declined
+  static Future<bool> showLocationDisclosure(BuildContext context) async {
+    if (_hasShownDisclosure) {
+      return true; // Already shown, proceed
+    }
+
+    final result = await LocationDisclosureDialog.show(context);
+    _hasShownDisclosure = result == true;
+    return _hasShownDisclosure;
+  }
+
+  Future<bool> checkPermissions({BuildContext? context}) async {
     // Check location service status first
     bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {
@@ -15,6 +33,15 @@ class LocationService {
     print('📍 Current permission status: $permission');
 
     if (permission == LocationPermission.denied) {
+      // On Android, show prominent disclosure before requesting permission
+      if (Platform.isAndroid && context != null && !_hasShownDisclosure) {
+        final accepted = await showLocationDisclosure(context);
+        if (!accepted) {
+          print('❌ User declined location disclosure');
+          return false;
+        }
+      }
+
       print('🔐 Requesting location permission...');
       permission = await Geolocator.requestPermission();
       print('📍 Permission result: $permission');
@@ -39,9 +66,10 @@ class LocationService {
 
   Future<Position?> getCurrentPosition({
     LocationAccuracy accuracy = LocationAccuracy.high,
+    BuildContext? context,
   }) async {
     print('🔐 Checking location permissions...');
-    final hasPermission = await checkPermissions();
+    final hasPermission = await checkPermissions(context: context);
     
     if (!hasPermission) {
       print('❌ Location permission not granted');

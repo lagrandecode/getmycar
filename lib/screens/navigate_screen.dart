@@ -207,6 +207,7 @@ class _NavigateScreenState extends State<NavigateScreen> {
       print('📍 NavigateScreen: Getting current location...');
       final position = await _locationService.getCurrentPosition(
         accuracy: LocationAccuracy.best,
+        context: context,
       );
       
       if (position == null) {

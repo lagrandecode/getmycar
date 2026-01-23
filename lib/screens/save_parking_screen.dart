@@ -41,6 +41,7 @@ class _SaveParkingScreenState extends State<SaveParkingScreen> {
       
       final position = await _locationService.getCurrentPosition(
         accuracy: LocationAccuracy.best, // Use best accuracy for real GPS
+        context: context,
       );
       
       if (position == null) {
