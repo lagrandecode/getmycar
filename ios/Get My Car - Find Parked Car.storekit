@@ -9,7 +9,7 @@
       }
     ]
   },
-  "identifier" : "A967685C",
+  "identifier" : "EEEC064F",
   "nonRenewingSubscriptions" : [
 
   ],
@@ -24,7 +24,7 @@
     "_developerTeamID" : "2RX956H8MF",
     "_disableDialogs" : false,
     "_failTransactionsEnabled" : false,
-    "_lastSynchronizedDate" : 790427930.75042903,
+    "_lastSynchronizedDate" : 790820253.85339499,
     "_locale" : "en_US",
     "_renewalBillingIssuesEnabled" : false,
     "_storefront" : "USA",
