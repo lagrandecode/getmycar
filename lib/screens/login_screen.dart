@@ -3,6 +3,7 @@ import 'package:flutter/scheduler.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'dart:io';
 import '../services/auth_service.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -210,6 +211,74 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
+  Future<void> _handleAppleSignIn() async {
+    setState(() => _isLoading = true);
+
+    try {
+      final authService = context.read<AuthService>();
+      await authService.signInWithApple();
+
+      // Navigate after authentication - use SchedulerBinding to ensure safe timing
+      if (mounted) {
+        SchedulerBinding.instance.addPostFrameCallback((_) {
+          Future.delayed(const Duration(milliseconds: 200), () {
+            if (!mounted) return;
+            try {
+              final router = GoRouter.maybeOf(context);
+              if (router != null && !router.canPop()) {
+                router.go('/home');
+              }
+            } catch (e) {
+              print('⚠️ Navigation error: $e');
+            }
+          });
+        });
+      }
+    } on FirebaseException catch (e) {
+      String errorMessage = 'Sign in with Apple failed';
+      if (e.code == 'account-exists-with-different-credential') {
+        errorMessage = 'An account already exists with this email. Please sign in with email/password.';
+      } else if (e.code == 'network-request-failed') {
+        errorMessage = 'Network error. Please check your connection and try again.';
+      } else {
+        errorMessage = 'Error: ${e.message ?? e.code}';
+      }
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(errorMessage),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 4),
+          ),
+        );
+      }
+    } catch (e) {
+      String errorMessage = 'Sign in with Apple error';
+      if (e.toString().contains('canceled') || e.toString().contains('cancelled')) {
+        errorMessage = 'Sign-in was canceled';
+      } else if (e.toString().contains('not available') || e.toString().contains('only available on iOS')) {
+        errorMessage = 'Sign in with Apple is only available on iOS devices';
+      } else {
+        errorMessage = 'Error: ${e.toString()}';
+      }
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(errorMessage),
+            backgroundColor: Colors.orange,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final brightness = Theme.of(context).brightness;
@@ -367,15 +436,43 @@ class _LoginScreenState extends State<LoginScreen> {
                     ],
                   ),
                   const SizedBox(height: 16),
-                  OutlinedButton.icon(
-                    onPressed: _isLoading ? null : _handleGoogleSignIn,
-                    icon: const Icon(Icons.g_mobiledata, size: 20, color: Colors.white),
-                    label: const Text('Continue with Google', style: TextStyle(color: Colors.white)),
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      side: const BorderSide(color: Colors.white),
+                  // Platform-specific social login buttons
+                  // iOS: Show Apple first, then Google
+                  // Android: Show only Google
+                  if (Platform.isIOS) ...[
+                    // Sign in with Apple button (iOS only, meets Guideline 4.8)
+                    OutlinedButton.icon(
+                      onPressed: _isLoading ? null : _handleAppleSignIn,
+                      icon: const Icon(Icons.apple, size: 20, color: Colors.white),
+                      label: const Text('Continue with Apple', style: TextStyle(color: Colors.white)),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        side: const BorderSide(color: Colors.white),
+                      ),
                     ),
-                  ),
+                    const SizedBox(height: 12),
+                    // Google Sign-In button (iOS)
+                    OutlinedButton.icon(
+                      onPressed: _isLoading ? null : _handleGoogleSignIn,
+                      icon: const Icon(Icons.g_mobiledata, size: 20, color: Colors.white),
+                      label: const Text('Continue with Google', style: TextStyle(color: Colors.white)),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        side: const BorderSide(color: Colors.white),
+                      ),
+                    ),
+                  ] else if (Platform.isAndroid) ...[
+                    // Google Sign-In button (Android only)
+                    OutlinedButton.icon(
+                      onPressed: _isLoading ? null : _handleGoogleSignIn,
+                      icon: const Icon(Icons.g_mobiledata, size: 20, color: Colors.white),
+                      label: const Text('Continue with Google', style: TextStyle(color: Colors.white)),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        side: const BorderSide(color: Colors.white),
+                      ),
+                    ),
+                  ],
                   const SizedBox(height: 16),
                   TextButton(
                     onPressed: _isLoading

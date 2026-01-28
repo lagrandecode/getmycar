@@ -47,26 +47,85 @@ class _OnboardingPaywallScreenState extends State<OnboardingPaywallScreen> {
       ]);
       
       if (mounted) {
+        if (products.isEmpty) {
+          if (kDebugMode) {
+            debugPrint('⚠️ No products found - using fallback prices');
+          }
+          setState(() {
+            _monthlyPrice = '\$9.99';
+            _yearlyPrice = null;
+            _isLoadingPrice = false;
+          });
+          return;
+        }
+        
         // Find monthly product
-        final monthlyProduct = products.firstWhere(
-          (p) => p.identifier == RevenueCatService.monthlyProductId,
-          orElse: () => products.isNotEmpty ? products.first : throw Exception('Product not found'),
-        );
+        StoreProduct? monthlyProduct;
+        StoreProduct? yearlyProduct;
         
-        // Find yearly product
-        final yearlyProduct = products.firstWhere(
-          (p) => p.identifier == RevenueCatService.yearlyProductId,
-          orElse: () => products.length > 1 ? products[1] : throw Exception('Product not found'),
-        );
+        try {
+          monthlyProduct = products.firstWhere(
+            (p) => p.identifier == RevenueCatService.monthlyProductId,
+          );
+        } catch (e) {
+          if (kDebugMode) {
+            debugPrint('⚠️ Monthly product not found, using first available product');
+          }
+          monthlyProduct = products.isNotEmpty ? products.first : null;
+        }
         
-        setState(() {
-          // Format price with currency symbol (e.g., "$9.99" or "₦4,500")
-          _monthlyPrice = monthlyProduct.priceString;
-          _yearlyPrice = yearlyProduct.priceString;
-          _isLoadingPrice = false;
-        });
+        try {
+          yearlyProduct = products.firstWhere(
+            (p) => p.identifier == RevenueCatService.yearlyProductId,
+          );
+        } catch (e) {
+          if (kDebugMode) {
+            debugPrint('⚠️ Yearly product not found');
+          }
+          yearlyProduct = products.length > 1 ? products[1] : null;
+        }
+        
+        if (monthlyProduct != null) {
+          if (kDebugMode) {
+            debugPrint('✅ Monthly product loaded: ${monthlyProduct.identifier}');
+            debugPrint('   Price: ${monthlyProduct.priceString}');
+            debugPrint('   Currency Code: ${monthlyProduct.currencyCode}');
+            debugPrint('   Price Amount: ${monthlyProduct.price}');
+            debugPrint('');
+            debugPrint('💡 NOTE: Currency is determined by:');
+            debugPrint('   1. Device App Store region (Settings → [Your Name] → Media & Purchases)');
+            debugPrint('   2. Sandbox tester account region (App Store Connect → Sandbox Testers)');
+            debugPrint('   3. Apple ID billing address region');
+            debugPrint('');
+            if (monthlyProduct.currencyCode == 'NGN') {
+              debugPrint('⚠️ WARNING: Currency is NGN (Naira) - this means your account/device is set to Nigeria!');
+              debugPrint('   To see CAD: Change device region to Canada or use a Canada sandbox tester account.');
+            } else if (monthlyProduct.currencyCode == 'CAD') {
+              debugPrint('✅ Currency is CAD (Canadian Dollar) - correct for Canada!');
+            }
+          }
+          
+          setState(() {
+            // Use priceString which automatically includes currency symbol in user's locale
+            _monthlyPrice = monthlyProduct!.priceString;
+            _yearlyPrice = yearlyProduct?.priceString;
+            _isLoadingPrice = false;
+          });
+        } else {
+          if (kDebugMode) {
+            debugPrint('❌ No monthly product available - using fallback');
+          }
+          setState(() {
+            _monthlyPrice = '\$9.99';
+            _yearlyPrice = null;
+            _isLoadingPrice = false;
+          });
+        }
       }
     } catch (e) {
+      if (kDebugMode) {
+        debugPrint('❌ Error loading product prices: $e');
+      }
       // Fallback to default prices
       if (mounted) {
         setState(() {

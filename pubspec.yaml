@@ -1,7 +1,7 @@
 name: findmycar
 description: A smart parking assistant app
 publish_to: 'none'
-version: 2.3.3+9
+version: 2.3.3+11
 
 
 environment:
@@ -22,6 +22,9 @@ dependencies:
   
   # Google Sign In
   google_sign_in: ^6.2.0
+  
+  # Sign in with Apple
+  sign_in_with_apple: ^6.1.0
   
   # Location & Maps
   geolocator: ^13.0.0
@@ -54,6 +57,7 @@ dependencies:
   package_info_plus: ^8.0.0
   purchases_flutter: ^9.10.5
   purchases_ui_flutter: ^9.10.5
+  crypto: ^3.0.3
 
 dev_dependencies:
   flutter_test:
@@ -73,5 +77,5 @@ flutter:
     - assets/icon/carIcon_red.png
     - assets/icon/carIcon_black.png
     - assets/icon/light.jpg
-    - assets/icon/dark.jpg
+    - assets/icon/dark.jpg 
 

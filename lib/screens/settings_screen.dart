@@ -416,6 +416,131 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
           const SizedBox(height: 16),
 
+          // Account Management Section
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+            child: Text(
+              'Account Management',
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+
+          // Delete Account (meets Guideline 5.1.1(v) requirements)
+          Card(
+            margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
+            child: ListTile(
+              leading: const Icon(Icons.delete_forever, color: Colors.red),
+              title: const Text('Delete Account'),
+              subtitle: const Text('Permanently delete your account and all data'),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () async {
+                // First confirmation dialog
+                final confirmDelete = await showDialog<bool>(
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    title: const Text('Delete Account'),
+                    content: const Text(
+                      'Are you sure you want to delete your account? This action cannot be undone.\n\n'
+                      'All your data will be permanently deleted, including:\n'
+                      '• Your profile information\n'
+                      '• All parking sessions\n'
+                      '• App preferences\n\n'
+                      'This action is permanent and cannot be reversed.',
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(context, false),
+                        child: const Text('Cancel'),
+                      ),
+                      TextButton(
+                        onPressed: () => Navigator.pop(context, true),
+                        style: TextButton.styleFrom(
+                          foregroundColor: Colors.red,
+                        ),
+                        child: const Text('Delete Account'),
+                      ),
+                    ],
+                  ),
+                );
+
+                if (confirmDelete != true || !context.mounted) return;
+
+                // Second confirmation dialog (double confirmation as per Apple guidelines)
+                final finalConfirm = await showDialog<bool>(
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    title: const Text('Final Confirmation'),
+                    content: const Text(
+                      'This is your last chance to cancel. Your account and all data will be permanently deleted.\n\n'
+                      'Are you absolutely sure?',
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(context, false),
+                        child: const Text('Cancel'),
+                      ),
+                      TextButton(
+                        onPressed: () => Navigator.pop(context, true),
+                        style: TextButton.styleFrom(
+                          foregroundColor: Colors.red,
+                        ),
+                        child: const Text('Yes, Delete Forever'),
+                      ),
+                    ],
+                  ),
+                );
+
+                if (finalConfirm != true || !context.mounted) return;
+
+                // Show loading indicator
+                if (context.mounted) {
+                  showDialog(
+                    context: context,
+                    barrierDismissible: false,
+                    builder: (context) => const Center(
+                      child: CircularProgressIndicator(),
+                    ),
+                  );
+                }
+
+                try {
+                  await authService.deleteAccount();
+                  
+                  if (context.mounted) {
+                    Navigator.pop(context); // Close loading dialog
+                    // Show success message
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Account deleted successfully'),
+                        backgroundColor: Colors.green,
+                        duration: Duration(seconds: 2),
+                      ),
+                    );
+                    // Navigate to login
+                    if (context.mounted) {
+                      context.go('/login');
+                    }
+                  }
+                } catch (e) {
+                  if (context.mounted) {
+                    Navigator.pop(context); // Close loading dialog
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Failed to delete account: ${e.toString()}'),
+                        backgroundColor: Colors.red,
+                        duration: const Duration(seconds: 5),
+                      ),
+                    );
+                  }
+                }
+              },
+            ),
+          ),
+
+          const SizedBox(height: 16),
+
           // Sign Out
           Padding(
             padding: const EdgeInsets.all(16.0),

@@ -1,7 +1,11 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'dart:io';
+import 'dart:math';
+import 'package:crypto/crypto.dart';
+import 'dart:convert';
 import '../models/user_model.dart';
 
 class AuthService {
@@ -116,6 +120,157 @@ class AuthService {
       return userCredential;
     } catch (e, stackTrace) {
       print('❌ Google Sign-In error: $e');
+      print('Stack trace: $stackTrace');
+      rethrow;
+    }
+  }
+
+  /// Generate a random nonce for Apple Sign-In security
+  String _generateNonce([int length = 32]) {
+    const charset = '0123456789ABCDEFGHIJKLMNOPQRSTUVXYZabcdefghijklmnopqrstuvwxyz-._';
+    final random = Random.secure();
+    return List.generate(length, (_) => charset[random.nextInt(charset.length)]).join();
+  }
+
+  /// Returns the sha256 hash of [input] in hex notation.
+  String _sha256ofString(String input) {
+    final bytes = utf8.encode(input);
+    final digest = sha256.convert(bytes);
+    return digest.toString();
+  }
+
+  /// Sign in with Apple (meets Guideline 4.8 requirements)
+  Future<UserCredential> signInWithApple() async {
+    try {
+      if (!Platform.isIOS) {
+        throw Exception('Sign in with Apple is only available on iOS');
+      }
+
+      print('🍎 Starting Sign in with Apple...');
+
+      // Generate a secure random nonce
+      final rawNonce = _generateNonce();
+      final nonce = _sha256ofString(rawNonce);
+
+      print('   Generated nonce for security');
+
+      // Request Apple ID credential with nonce
+      final appleCredential = await SignInWithApple.getAppleIDCredential(
+        scopes: [
+          AppleIDAuthorizationScopes.email,
+          AppleIDAuthorizationScopes.fullName,
+        ],
+        nonce: nonce,
+      );
+
+      print('✅ Apple ID credential received');
+      print('   Identity Token: ${appleCredential.identityToken != null ? "Present" : "Missing"}');
+      print('   Authorization Code: ${appleCredential.authorizationCode != null ? "Present" : "Missing"}');
+
+      // Validate that we have the identity token
+      if (appleCredential.identityToken == null) {
+        throw Exception('Failed to get identity token from Apple');
+      }
+
+      // Create OAuth credential from Apple ID token
+      // Firebase requires idToken, rawNonce, and accessToken (authorizationCode) for Apple Sign-In
+      final oauthCredential = OAuthProvider("apple.com").credential(
+        idToken: appleCredential.identityToken!,
+        rawNonce: rawNonce,
+        accessToken: appleCredential.authorizationCode, // Required for newer Firebase Auth versions
+      );
+
+      print('🔐 Signing in to Firebase with Apple credential...');
+
+      // Sign in to Firebase with the Apple credential (with retry)
+      final userCredential = await _retryAuthOperation(() async {
+        return await _auth.signInWithCredential(oauthCredential);
+      });
+
+      print('✅ Firebase authentication successful');
+
+      // Update user display name if provided (only on first sign-in)
+      if (appleCredential.givenName != null || appleCredential.familyName != null) {
+        final displayName = '${appleCredential.givenName ?? ''} ${appleCredential.familyName ?? ''}'.trim();
+        if (displayName.isNotEmpty && userCredential.user?.displayName == null) {
+          await userCredential.user?.updateDisplayName(displayName);
+        }
+      }
+
+      // Ensure user document exists
+      await _ensureUserDocument(userCredential.user!);
+
+      return userCredential;
+    } on FirebaseAuthException catch (e) {
+      print('❌ Firebase Auth error during Sign in with Apple:');
+      print('   Code: ${e.code}');
+      print('   Message: ${e.message}');
+      print('   Email: ${e.email}');
+      print('   Credential: ${e.credential}');
+      rethrow;
+    } catch (e, stackTrace) {
+      print('❌ Sign in with Apple error: $e');
+      print('Stack trace: $stackTrace');
+      rethrow;
+    }
+  }
+
+  /// Delete user account and all associated data (meets Guideline 5.1.1(v) requirements)
+  Future<void> deleteAccount() async {
+    final user = _auth.currentUser;
+    if (user == null) {
+      throw Exception('No user is currently signed in');
+    }
+
+    try {
+      final userId = user.uid;
+      print('🗑️ Starting account deletion for user: $userId');
+
+      // Delete user's Firestore data
+      try {
+        // Delete user document
+        await _firestore.collection('users').doc(userId).delete();
+        print('✅ User document deleted');
+
+        // Delete user's parking sessions
+        final parkingSessions = await _firestore
+            .collection('parking_sessions')
+            .where('userId', isEqualTo: userId)
+            .get();
+
+        final batch = _firestore.batch();
+        for (var doc in parkingSessions.docs) {
+          batch.delete(doc.reference);
+        }
+        await batch.commit();
+        print('✅ Parking sessions deleted (${parkingSessions.docs.length} sessions)');
+
+        // Delete user's FCM tokens
+        final fcmTokens = await _firestore
+            .collection('fcm_tokens')
+            .where('userId', isEqualTo: userId)
+            .get();
+
+        final tokenBatch = _firestore.batch();
+        for (var doc in fcmTokens.docs) {
+          tokenBatch.delete(doc.reference);
+        }
+        await tokenBatch.commit();
+        print('✅ FCM tokens deleted');
+      } catch (e) {
+        print('⚠️ Warning: Failed to delete some Firestore data: $e');
+        // Continue with account deletion even if Firestore deletion fails
+      }
+
+      // Delete Firebase Auth account
+      await user.delete();
+      print('✅ Firebase Auth account deleted');
+
+      // Sign out to clear local state
+      await _auth.signOut();
+      print('✅ Account deletion completed');
+    } catch (e, stackTrace) {
+      print('❌ Account deletion error: $e');
       print('Stack trace: $stackTrace');
       rethrow;
     }
