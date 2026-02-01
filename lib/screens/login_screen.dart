@@ -463,15 +463,15 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ] else if (Platform.isAndroid) ...[
                     // Google Sign-In button (Android only)
-                    OutlinedButton.icon(
-                      onPressed: _isLoading ? null : _handleGoogleSignIn,
-                      icon: const Icon(Icons.g_mobiledata, size: 20, color: Colors.white),
-                      label: const Text('Continue with Google', style: TextStyle(color: Colors.white)),
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        side: const BorderSide(color: Colors.white),
-                      ),
+                  OutlinedButton.icon(
+                    onPressed: _isLoading ? null : _handleGoogleSignIn,
+                    icon: const Icon(Icons.g_mobiledata, size: 20, color: Colors.white),
+                    label: const Text('Continue with Google', style: TextStyle(color: Colors.white)),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      side: const BorderSide(color: Colors.white),
                     ),
+                  ),
                   ],
                   const SizedBox(height: 16),
                   TextButton(

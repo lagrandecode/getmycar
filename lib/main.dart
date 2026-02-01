@@ -32,16 +32,16 @@ void main() async {
 
   // Wrap everything in try-catch to prevent crashes
   try {
-    await SystemChrome.setEnabledSystemUIMode(
-      SystemUiMode.immersiveSticky,
-    );
+  await SystemChrome.setEnabledSystemUIMode(
+    SystemUiMode.immersiveSticky,
+  );
   } catch (e) {
     print('⚠️ SystemChrome initialization failed: $e');
   }
   
   // Initialize notification service
   try {
-    await NotificationService.initialize();
+  await NotificationService.initialize();
   } catch (e) {
     print('⚠️ NotificationService initialization failed: $e');
     // Continue - app should work without notifications

@@ -96,7 +96,7 @@ import AVFoundation
     // Firebase is initialized in Flutter's main.dart, which may not be ready yet
     // So we check if Firebase is available before using Messaging
     if FirebaseApp.app() != nil {
-      Messaging.messaging().apnsToken = deviceToken
+    Messaging.messaging().apnsToken = deviceToken
     } else {
       print("⚠️ Firebase not initialized yet - APNs token will be set later by FCMService")
       // Store token to set later when Firebase is ready

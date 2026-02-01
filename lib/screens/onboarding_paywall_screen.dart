@@ -309,14 +309,14 @@ class _OnboardingPaywallScreenState extends State<OnboardingPaywallScreen> {
           debugPrint('❌ Restore error (technical): $e');
         }
         
-        ScaffoldMessenger.of(context).showSnackBar(
+    ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(errorMessage),
             backgroundColor: Colors.red,
             duration: const Duration(seconds: 3),
           ),
-        );
-      }
+    );
+  }
     } finally {
       if (mounted) {
         setState(() => _isRestoring = false);

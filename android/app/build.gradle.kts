@@ -62,8 +62,8 @@ android {
                 signingConfigs.getByName("release")
             } else {
                 signingConfigs.getByName("debug")
-            }
         }
+    }
     }
 }
 
